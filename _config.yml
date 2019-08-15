@@ -16,8 +16,7 @@
 title: Leafee's Blog
 email: leafee98@hotmail.com
 description: >- # this means to ignore newlines until "baseurl:"
- Leafee's blog based on jekyll, looking for
- solution of article's tags
+ Leafee's blog based on jekyll
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: leafee98
