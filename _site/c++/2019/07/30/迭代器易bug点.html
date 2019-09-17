@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>C++迭代器易bug点 | Leafee’s Blog</title>
+<meta name="generator" content="Jekyll v3.8.6" />
+<meta property="og:title" content="C++迭代器易bug点" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="在对容器进行迭代时，尽可能避免对容器内容的修改，如确实需要修改，则一定要注意容器被修改后当前迭代器的位置是否仍然可用。 错误代码例 以下代码为一次训练赛D题的尝试作答，原题面为 输入每个人的电话号码，将其整理后输出，人名顺序可以为字母序，每个人的电话号码也可以为字母序。 规定一个人如果有多个相同号码，则视之为一个号码；如果有多个不同长度的号码，且较长的号码意较短的号码为后缀，则视较短的号码为冗余号码；有多个人共享同一个号码的情况 第一行输入一个数字代表接下来要输入的行数， 每行起始一个字符串代表一个人的姓名，接下来一个数字n表示后边的数字的个数，接下来n个数字代表属于这个人的电话号码们 INPUT: 4 ivan 3 123 123 456 ivan 2 456 456 ivan 8 789 3 23 6 56 9 89 2 dasha 2 23 789 OUTPUT: 2 dasha 2 23 789 ivan 4 789 123 2 456 INPUT: 3 karl 2 612 12 petr 1 12 katya 1 612 OUTPUT: 3 katya 1 612 petr 1 12 karl 1 612 解题思路为使用一个map&lt;string, set&lt;string&gt;&gt;容器，map以人名为键，以所有的电话号码为值，而在set中，电话号码倒序存储。 在遍历一个人的所有电话号码时，只需要比较相邻的两个号码，前一个是否是后一个的前缀即可，若是，则移除前一个，若否，则遍历下一个，直到倒数第二个。 #include &lt;iostream&gt; #include &lt;map&gt; #include &lt;string&gt; #include &lt;set&gt; using namespace std; int main() { map&lt;string, set&lt;string&gt;&gt; records; int n; cin &gt;&gt; n; while (n-- &gt; 0) { string name, number; int amount; cin &gt;&gt; name &gt;&gt; amount; while (amount-- &gt; 0) { cin &gt;&gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) { set&lt;string&gt; &amp; numbers = it-&gt;second; for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) { set&lt;string&gt;::iterator iv = iu; // the iterator right adjacent to iu if (iv != numbers.end()) { ++iv; const string &amp; pointToStr= *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&gt;size()); if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; (*iu == tmpStr)) numbers.erase(*iu); } } set&lt;string&gt; reverseSet; reverseSet.swap(numbers); for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &lt;&lt; it-&gt;first &lt;&lt; &#39; &#39; &lt;&lt; it-&gt;second.size(); for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu) cout &lt;&lt; *iu &lt;&lt; &#39; &#39;; cout &lt;&lt; endl; } return 0; } 以上代码在自己调配的VS Code + g++（on Windows）环境下会在第二个循环中string tmpStr = copyStr.substr(0, iu-&gt;size());的位置崩溃，且没有任何提示。 在Visual Studio中，会以弹窗的形式报cannot dereference end map/set/ iterator错误，报错位置是第二个循环的for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) {，报错条件是判断语句中的numbers.erase(*iu); 执行后。 综上，错误原因是当*iu的内容被移除后，迭代器iu所指向的位置就已经失效了，再次进行自增操作则会由于操作已经销毁的内存而程序崩溃。 修改后的代码如下，但是并没有AC #include &lt;iostream&gt; #include &lt;map&gt; #include &lt;string&gt; #include &lt;set&gt; using namespace std; int main() { map&lt;string, set&lt;string&gt;&gt; records; int n; cin &gt;&gt; n; while (n-- &gt; 0) { string name, number; int amount; cin &gt;&gt; name &gt;&gt; amount; while (amount-- &gt; 0) { cin &gt;&gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) { set&lt;string&gt;&amp; numbers = it-&gt;second; for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ) { set&lt;string&gt;::iterator iv = iu; // the iterator right adjacent to iu ++iv; if (iv != numbers.end()) { const string&amp; pointToStr = *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&gt;size()); if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; *iu == tmpStr) numbers.erase(tmpStr); iu = iv; // ++iu } else { break; } } set&lt;string&gt; reverseSet; reverseSet.swap(numbers); for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &lt;&lt; it-&gt;first &lt;&lt; &#39; &#39; &lt;&lt; it-&gt;second.size() &lt;&lt; &#39; &#39;; for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu) cout &lt;&lt; *iu &lt;&lt; &#39; &#39;; cout &lt;&lt; endl; } return 0; }" />
+<meta property="og:description" content="在对容器进行迭代时，尽可能避免对容器内容的修改，如确实需要修改，则一定要注意容器被修改后当前迭代器的位置是否仍然可用。 错误代码例 以下代码为一次训练赛D题的尝试作答，原题面为 输入每个人的电话号码，将其整理后输出，人名顺序可以为字母序，每个人的电话号码也可以为字母序。 规定一个人如果有多个相同号码，则视之为一个号码；如果有多个不同长度的号码，且较长的号码意较短的号码为后缀，则视较短的号码为冗余号码；有多个人共享同一个号码的情况 第一行输入一个数字代表接下来要输入的行数， 每行起始一个字符串代表一个人的姓名，接下来一个数字n表示后边的数字的个数，接下来n个数字代表属于这个人的电话号码们 INPUT: 4 ivan 3 123 123 456 ivan 2 456 456 ivan 8 789 3 23 6 56 9 89 2 dasha 2 23 789 OUTPUT: 2 dasha 2 23 789 ivan 4 789 123 2 456 INPUT: 3 karl 2 612 12 petr 1 12 katya 1 612 OUTPUT: 3 katya 1 612 petr 1 12 karl 1 612 解题思路为使用一个map&lt;string, set&lt;string&gt;&gt;容器，map以人名为键，以所有的电话号码为值，而在set中，电话号码倒序存储。 在遍历一个人的所有电话号码时，只需要比较相邻的两个号码，前一个是否是后一个的前缀即可，若是，则移除前一个，若否，则遍历下一个，直到倒数第二个。 #include &lt;iostream&gt; #include &lt;map&gt; #include &lt;string&gt; #include &lt;set&gt; using namespace std; int main() { map&lt;string, set&lt;string&gt;&gt; records; int n; cin &gt;&gt; n; while (n-- &gt; 0) { string name, number; int amount; cin &gt;&gt; name &gt;&gt; amount; while (amount-- &gt; 0) { cin &gt;&gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) { set&lt;string&gt; &amp; numbers = it-&gt;second; for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) { set&lt;string&gt;::iterator iv = iu; // the iterator right adjacent to iu if (iv != numbers.end()) { ++iv; const string &amp; pointToStr= *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&gt;size()); if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; (*iu == tmpStr)) numbers.erase(*iu); } } set&lt;string&gt; reverseSet; reverseSet.swap(numbers); for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &lt;&lt; it-&gt;first &lt;&lt; &#39; &#39; &lt;&lt; it-&gt;second.size(); for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu) cout &lt;&lt; *iu &lt;&lt; &#39; &#39;; cout &lt;&lt; endl; } return 0; } 以上代码在自己调配的VS Code + g++（on Windows）环境下会在第二个循环中string tmpStr = copyStr.substr(0, iu-&gt;size());的位置崩溃，且没有任何提示。 在Visual Studio中，会以弹窗的形式报cannot dereference end map/set/ iterator错误，报错位置是第二个循环的for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) {，报错条件是判断语句中的numbers.erase(*iu); 执行后。 综上，错误原因是当*iu的内容被移除后，迭代器iu所指向的位置就已经失效了，再次进行自增操作则会由于操作已经销毁的内存而程序崩溃。 修改后的代码如下，但是并没有AC #include &lt;iostream&gt; #include &lt;map&gt; #include &lt;string&gt; #include &lt;set&gt; using namespace std; int main() { map&lt;string, set&lt;string&gt;&gt; records; int n; cin &gt;&gt; n; while (n-- &gt; 0) { string name, number; int amount; cin &gt;&gt; name &gt;&gt; amount; while (amount-- &gt; 0) { cin &gt;&gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) { set&lt;string&gt;&amp; numbers = it-&gt;second; for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ) { set&lt;string&gt;::iterator iv = iu; // the iterator right adjacent to iu ++iv; if (iv != numbers.end()) { const string&amp; pointToStr = *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&gt;size()); if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; *iu == tmpStr) numbers.erase(tmpStr); iu = iv; // ++iu } else { break; } } set&lt;string&gt; reverseSet; reverseSet.swap(numbers); for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &lt;&lt; it-&gt;first &lt;&lt; &#39; &#39; &lt;&lt; it-&gt;second.size() &lt;&lt; &#39; &#39;; for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu) cout &lt;&lt; *iu &lt;&lt; &#39; &#39;; cout &lt;&lt; endl; } return 0; }" />
+<link rel="canonical" href="/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html" />
+<meta property="og:url" content="/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html" />
+<meta property="og:site_name" content="Leafee’s Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-07-30T15:48:48+08:00" />
+<script type="application/ld+json">
+{"description":"在对容器进行迭代时，尽可能避免对容器内容的修改，如确实需要修改，则一定要注意容器被修改后当前迭代器的位置是否仍然可用。 错误代码例 以下代码为一次训练赛D题的尝试作答，原题面为 输入每个人的电话号码，将其整理后输出，人名顺序可以为字母序，每个人的电话号码也可以为字母序。 规定一个人如果有多个相同号码，则视之为一个号码；如果有多个不同长度的号码，且较长的号码意较短的号码为后缀，则视较短的号码为冗余号码；有多个人共享同一个号码的情况 第一行输入一个数字代表接下来要输入的行数， 每行起始一个字符串代表一个人的姓名，接下来一个数字n表示后边的数字的个数，接下来n个数字代表属于这个人的电话号码们 INPUT: 4 ivan 3 123 123 456 ivan 2 456 456 ivan 8 789 3 23 6 56 9 89 2 dasha 2 23 789 OUTPUT: 2 dasha 2 23 789 ivan 4 789 123 2 456 INPUT: 3 karl 2 612 12 petr 1 12 katya 1 612 OUTPUT: 3 katya 1 612 petr 1 12 karl 1 612 解题思路为使用一个map&lt;string, set&lt;string&gt;&gt;容器，map以人名为键，以所有的电话号码为值，而在set中，电话号码倒序存储。 在遍历一个人的所有电话号码时，只需要比较相邻的两个号码，前一个是否是后一个的前缀即可，若是，则移除前一个，若否，则遍历下一个，直到倒数第二个。 #include &lt;iostream&gt; #include &lt;map&gt; #include &lt;string&gt; #include &lt;set&gt; using namespace std; int main() { map&lt;string, set&lt;string&gt;&gt; records; int n; cin &gt;&gt; n; while (n-- &gt; 0) { string name, number; int amount; cin &gt;&gt; name &gt;&gt; amount; while (amount-- &gt; 0) { cin &gt;&gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) { set&lt;string&gt; &amp; numbers = it-&gt;second; for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) { set&lt;string&gt;::iterator iv = iu; // the iterator right adjacent to iu if (iv != numbers.end()) { ++iv; const string &amp; pointToStr= *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&gt;size()); if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; (*iu == tmpStr)) numbers.erase(*iu); } } set&lt;string&gt; reverseSet; reverseSet.swap(numbers); for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &lt;&lt; it-&gt;first &lt;&lt; &#39; &#39; &lt;&lt; it-&gt;second.size(); for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu) cout &lt;&lt; *iu &lt;&lt; &#39; &#39;; cout &lt;&lt; endl; } return 0; } 以上代码在自己调配的VS Code + g++（on Windows）环境下会在第二个循环中string tmpStr = copyStr.substr(0, iu-&gt;size());的位置崩溃，且没有任何提示。 在Visual Studio中，会以弹窗的形式报cannot dereference end map/set/ iterator错误，报错位置是第二个循环的for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) {，报错条件是判断语句中的numbers.erase(*iu); 执行后。 综上，错误原因是当*iu的内容被移除后，迭代器iu所指向的位置就已经失效了，再次进行自增操作则会由于操作已经销毁的内存而程序崩溃。 修改后的代码如下，但是并没有AC #include &lt;iostream&gt; #include &lt;map&gt; #include &lt;string&gt; #include &lt;set&gt; using namespace std; int main() { map&lt;string, set&lt;string&gt;&gt; records; int n; cin &gt;&gt; n; while (n-- &gt; 0) { string name, number; int amount; cin &gt;&gt; name &gt;&gt; amount; while (amount-- &gt; 0) { cin &gt;&gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) { set&lt;string&gt;&amp; numbers = it-&gt;second; for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ) { set&lt;string&gt;::iterator iv = iu; // the iterator right adjacent to iu ++iv; if (iv != numbers.end()) { const string&amp; pointToStr = *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&gt;size()); if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; *iu == tmpStr) numbers.erase(tmpStr); iu = iv; // ++iu } else { break; } } set&lt;string&gt; reverseSet; reverseSet.swap(numbers); for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &lt;&lt; it-&gt;first &lt;&lt; &#39; &#39; &lt;&lt; it-&gt;second.size() &lt;&lt; &#39; &#39;; for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu) cout &lt;&lt; *iu &lt;&lt; &#39; &#39;; cout &lt;&lt; endl; } return 0; }","@type":"BlogPosting","headline":"C++迭代器易bug点","dateModified":"2019-07-30T15:48:48+08:00","datePublished":"2019-07-30T15:48:48+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html"},"url":"/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="Leafee's Blog" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Leafee&#39;s Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/tags.html">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">C++迭代器易bug点</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2019-07-30T15:48:48+08:00" itemprop="datePublished">Jul 30, 2019
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>在对容器进行迭代时，尽可能避免对容器内容的修改，如确实需要修改，则一定要注意容器被修改后当前迭代器的位置是否仍然可用。</strong></p>
+
+<h2 id="错误代码例">错误代码例</h2>
+
+<p>以下代码为<a href="http://codeforces.com/gym/247981/problem/D">一次训练赛D题</a>的尝试作答，原题面为</p>
+
+<blockquote>
+  <p>输入每个人的电话号码，将其整理后输出，人名顺序可以为字母序，每个人的电话号码也可以为字母序。</p>
+
+  <p>规定一个人如果有多个相同号码，则视之为一个号码；如果有多个不同长度的号码，且较长的号码意较短的号码为后缀，则视较短的号码为冗余号码；有多个人共享同一个号码的情况</p>
+
+  <blockquote>
+    <p>第一行输入一个数字代表接下来要输入的行数，
+每行起始一个字符串代表一个人的姓名，接下来一个数字n表示后边的数字的个数，接下来n个数字代表属于这个人的电话号码们</p>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>INPUT:
+4
+ivan 3 123 123 456
+ivan 2 456 456
+ivan 8 789 3 23 6 56 9 89 2
+dasha 2 23 789
+
+OUTPUT:
+2
+dasha 2 23 789 
+ivan 4 789 123 2 456 
+</code></pre></div>    </div>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>INPUT:
+3
+karl 2 612 12
+petr 1 12
+katya 1 612
+
+OUTPUT:
+3
+katya 1 612 
+petr 1 12 
+karl 1 612 
+</code></pre></div>    </div>
+  </blockquote>
+</blockquote>
+
+<p>解题思路为使用一个<code class="highlighter-rouge">map&lt;string, set&lt;string&gt;&gt;</code>容器，<code class="highlighter-rouge">map</code>以人名为键，以所有的电话号码为值，而在<code class="highlighter-rouge">set</code>中，电话号码倒序存储。</p>
+
+<p>在遍历一个人的所有电话号码时，只需要比较相邻的两个号码，前一个是否是后一个的前缀即可，若是，则移除前一个，若否，则遍历下一个，直到倒数第二个。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+#include &lt;set&gt;
+</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;&gt;</span> <span class="n">records</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+    <span class="n">cin</span> <span class="o">&gt;&gt;</span> <span class="n">n</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">n</span><span class="o">--</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">string</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">amount</span><span class="p">;</span>
+        <span class="n">cin</span> <span class="o">&gt;&gt;</span> <span class="n">name</span> <span class="o">&gt;&gt;</span> <span class="n">amount</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">amount</span><span class="o">--</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">cin</span> <span class="o">&gt;&gt;</span> <span class="n">number</span><span class="p">;</span>
+            <span class="n">string</span> <span class="n">temp</span><span class="p">(</span><span class="n">number</span><span class="p">.</span><span class="n">rbegin</span><span class="p">(),</span> <span class="n">number</span><span class="p">.</span><span class="n">rend</span><span class="p">());</span>
+            <span class="n">records</span><span class="p">[</span><span class="n">name</span><span class="p">].</span><span class="n">emplace</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;&gt;::</span><span class="n">iterator</span> <span class="n">it</span> <span class="o">=</span> <span class="n">records</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">it</span> <span class="o">!=</span> <span class="n">records</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">it</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">numbers</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iu</span> <span class="o">=</span> <span class="n">numbers</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">iu</span> <span class="o">!=</span> <span class="n">numbers</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">iu</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iv</span> <span class="o">=</span> <span class="n">iu</span><span class="p">;</span>		<span class="c1">// the iterator right adjacent to iu</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">iv</span> <span class="o">!=</span> <span class="n">numbers</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+                <span class="o">++</span><span class="n">iv</span><span class="p">;</span>
+                <span class="k">const</span> <span class="n">string</span> <span class="o">&amp;</span> <span class="n">pointToStr</span><span class="o">=</span> <span class="o">*</span><span class="n">iv</span><span class="p">;</span>
+                <span class="n">string</span> <span class="n">copyStr</span> <span class="o">=</span> <span class="n">string</span><span class="p">(</span><span class="n">pointToStr</span><span class="p">);</span>
+                <span class="n">string</span> <span class="n">tmpStr</span> <span class="o">=</span> <span class="n">copyStr</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">iu</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">());</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">iv</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">iu</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">*</span><span class="n">iu</span> <span class="o">==</span> <span class="n">tmpStr</span><span class="p">))</span>
+                    <span class="n">numbers</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="o">*</span><span class="n">iu</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">reverseSet</span><span class="p">;</span>
+        <span class="n">reverseSet</span><span class="p">.</span><span class="n">swap</span><span class="p">(</span><span class="n">numbers</span><span class="p">);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iw</span> <span class="o">=</span> <span class="n">reverseSet</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">iw</span> <span class="o">!=</span> <span class="n">reverseSet</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">iw</span><span class="p">)</span>
+            <span class="n">numbers</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">string</span><span class="p">(</span><span class="n">iw</span><span class="o">-&gt;</span><span class="n">rbegin</span><span class="p">(),</span> <span class="n">iw</span><span class="o">-&gt;</span><span class="n">rend</span><span class="p">()));</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">it</span> <span class="o">=</span> <span class="n">records</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">it</span> <span class="o">!=</span> <span class="n">records</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">it</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">first</span> <span class="o">&lt;&lt;</span> <span class="sc">' '</span> <span class="o">&lt;&lt;</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">set</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iu</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">iu</span> <span class="o">!=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">iu</span><span class="p">)</span>
+            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">iu</span> <span class="o">&lt;&lt;</span> <span class="sc">' '</span><span class="p">;</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上代码在自己调配的<code class="highlighter-rouge">VS Code</code> + <code class="highlighter-rouge">g++</code>（on Windows）环境下会在第二个循环中<code class="highlighter-rouge">string tmpStr = copyStr.substr(0, iu-&gt;size());</code>的位置崩溃，且没有任何提示。</p>
+
+<p>在Visual Studio中，会以弹窗的形式报<code class="highlighter-rouge">cannot dereference end map/set/ iterator</code>错误，报错位置是第二个循环的<code class="highlighter-rouge">for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) {</code>，报错条件是判断语句中的<code class="highlighter-rouge">numbers.erase(*iu);</code> 执行后。</p>
+
+<p>综上，错误原因是<strong>当<code class="highlighter-rouge">*iu</code>的内容被移除后，迭代器<code class="highlighter-rouge">iu</code>所指向的位置就已经失效了，再次进行自增操作则会由于操作已经销毁的内存而程序崩溃。</strong></p>
+
+<p>修改后的代码如下，但是<strong>并没有AC</strong></p>
+
+<pre><code class="language-C++">#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+#include &lt;set&gt;
+using namespace std;
+
+int main() {
+	map&lt;string, set&lt;string&gt;&gt; records;
+	int n;
+	cin &gt;&gt; n;
+	while (n-- &gt; 0) {
+		string name, number;
+		int amount;
+		cin &gt;&gt; name &gt;&gt; amount;
+		while (amount-- &gt; 0) {
+			cin &gt;&gt; number;
+			string temp(number.rbegin(), number.rend());
+			records[name].emplace(temp);
+		}
+	}
+
+	for (map&lt;string, set&lt;string&gt;&gt;::iterator it = records.begin(); it != records.end(); ++it) {
+		set&lt;string&gt;&amp; numbers = it-&gt;second;
+		for (set&lt;string&gt;::iterator iu = numbers.begin(); iu != numbers.end(); ) {
+			set&lt;string&gt;::iterator iv = iu;		// the iterator right adjacent to iu
+			++iv;
+			if (iv != numbers.end()) {
+				const string&amp; pointToStr = *iv;
+				string copyStr = string(pointToStr);
+				string tmpStr = copyStr.substr(0, iu-&gt;size());
+				if (iv-&gt;size() &gt;= iu-&gt;size() &amp;&amp; *iu == tmpStr)
+					numbers.erase(tmpStr);
+				iu = iv;			// ++iu
+			} else {
+				break;
+			}
+		}
+		set&lt;string&gt; reverseSet;
+		reverseSet.swap(numbers);
+		for (set&lt;string&gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw)
+			numbers.emplace(string(iw-&gt;rbegin(), iw-&gt;rend()));
+	}
+
+	for (auto it = records.begin(); it != records.end(); ++it) {
+		cout &lt;&lt; it-&gt;first &lt;&lt; ' ' &lt;&lt; it-&gt;second.size() &lt;&lt; ' ';
+		for (set&lt;string&gt;::iterator iu = it-&gt;second.begin(); iu != it-&gt;second.end(); ++iu)
+			cout &lt;&lt; *iu &lt;&lt; ' ';
+		cout &lt;&lt; endl;
+	}
+
+	return 0;
+}
+</code></pre>
+
+  </div><a class="u-url" href="/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Leafee&#39;s Blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Leafee&#39;s Blog</li><li><a class="u-email" href="mailto:leafee98@hotmail.com">leafee98@hotmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/leafee98"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">leafee98</span></a></li><li><a href="https://www.twitter.com/leafee98"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">leafee98</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Leafee&#39;s blog based on jekyll</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

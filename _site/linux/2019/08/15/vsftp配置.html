@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>vsftp 配置 | Leafee’s Blog</title>
+<meta name="generator" content="Jekyll v3.8.6" />
+<meta property="og:title" content="vsftp 配置" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为两个方面 配置pam模块 (见下方小标题) 创建认证信息文件(passwd文件) (见下方小标题) 选项简介 nopriv_user=nobody – 当vsftpd什么都不需要的时候, 会使用此用户的权限等级, 建议此用户无任何特殊权限, 这样即便vsftpd被黑掉, 黑客也是什么都干不了 secure_chroot_dir – 当vsftpd不再需要访问文件系统时, 会chroot到这个目录. 此目录应当是空的, 并且不应当被ftp用户可写 pam_service_name=vsftpd – 即/etc/pam.d/目录下的vsftpd所用的pam配置的文件 PAM模块 pam (Pluggable Authentication Modules)为应用和服务提供动态的认证支持, pam模块一般在/lib/security/或/lib/(arch_type)/security下. 仅虚拟用户的PAM # 文件为 /etc/pam.d/vsftpd # 使用 pam_pwdfile.so 模块来进行虚拟用户的认证, 使用的文件为/etc/vsftpd/.passwd # 且文件内容格式为每行起始为用户名, 冒号分隔, 后接md5加密后的密码. example: # test:$1$aT64AHTK$/xRnwvHafFmTzo6GpaCZL/ auth required pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account required pam_permit.so 仅本地用户的PAM 一般默认的pam文件即可实现仅本地用户认证, 保持默认即可, 不同的系统的默认pam文件内容也不同 Arch Linux #%PAM-1.0 # auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL ## Standard behaviour for ftpd(8). #auth required pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed # ## Note: vsftpd handles anonymous logins on its own. Do not enable pam_ftp.so. # ## Standard pam includes @include common-account @include common-session @include common-auth auth required pam_shells.so 同时允许本地和虚拟用户的PAM 由于Arch Linux和Ubuntu默认的PAM文件不一样, 所以两个配置有所不同. 如果简单地允许本地和虚拟用户的PAM加在一起, 结果并不是同时允许本地用户和虚拟用户, 因为文档中描述required和requisite都会在验证失败时直接返回失败, 而sufficient在本次验证失败, 则会继续进行后续模块的验证, 所以我的做法是将虚拟用户的验证模块由required变更为sufficient后添加到本地用户验证模块之前.1 required failure of such a PAM will ultimately lead to the PAM-API returning failure but only after the remaining stacked modules (for this service and type) have been invoked requisite like required, however, in the case that such a module returns a failure, control is directly returned to the application. sufficient success of such a module is enough to satisfy the authentication requirements of the stack of modules (if a prior required module has failed the success of this one is ignored). A failure of this module is not deemed as fatal to satisfying the application that this type has succeeded. If the module succeeds the PAM framework returns success to the application immediately without trying any other modules. Arch Linux pam_pwdfile模块需要在archlinux.org中的AUR自行安装 #%PAM-1.0 # auth sufficient /lib/security/pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient /lib/security/pam_permit.so auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL Ubuntu WSL 的配置直接将虚拟用户认证模块粘贴到@include之前不能达到期望的结果, 于是参照 Arch Linux 的配置改为如下后成功, auth sufficient pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient pam_permit.so auth required pam_listfile.so item=user sense=deny file=/etc/vsftpd.ftpusers onerr=succeed auth required pam_unix.so shadow nullok auth required pam_shells.so account required pam_unix.so session required pam_unix.so 虚拟用户的passwd文件 这个文件的路径和文件名都写在pam模块中, 如同时允许虚拟用户和本地用户登录的Arch Linux的pam配置的第一行有效行 文件格式就是每行以用户名为起始, 冒号分隔, 后接MD5加密的密码 密码加密可以使用openssl passwd -1 -noverify ${yourPasswd}来加密, 只需要将此命令的输出作为加密后密码追加在冒号之后即可 报错总结 500 OOPS: cannot locate user entry:2 如果是虚拟用户登录时报错, 需要检查guest_enable选项是否为YES以及guest_username是否合法; 如果是本地用户, 则需要检查是否时用户名拼写错误 https://www.linuxquestions.org/questions/linux-software-2/how-to-enable-both-virtual-and-local-vsftpd-logins-with-pam-365860/ &#8617; https://ubuntuforums.org/showthread.php?t=1679782 &#8617;" />
+<meta property="og:description" content="vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为两个方面 配置pam模块 (见下方小标题) 创建认证信息文件(passwd文件) (见下方小标题) 选项简介 nopriv_user=nobody – 当vsftpd什么都不需要的时候, 会使用此用户的权限等级, 建议此用户无任何特殊权限, 这样即便vsftpd被黑掉, 黑客也是什么都干不了 secure_chroot_dir – 当vsftpd不再需要访问文件系统时, 会chroot到这个目录. 此目录应当是空的, 并且不应当被ftp用户可写 pam_service_name=vsftpd – 即/etc/pam.d/目录下的vsftpd所用的pam配置的文件 PAM模块 pam (Pluggable Authentication Modules)为应用和服务提供动态的认证支持, pam模块一般在/lib/security/或/lib/(arch_type)/security下. 仅虚拟用户的PAM # 文件为 /etc/pam.d/vsftpd # 使用 pam_pwdfile.so 模块来进行虚拟用户的认证, 使用的文件为/etc/vsftpd/.passwd # 且文件内容格式为每行起始为用户名, 冒号分隔, 后接md5加密后的密码. example: # test:$1$aT64AHTK$/xRnwvHafFmTzo6GpaCZL/ auth required pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account required pam_permit.so 仅本地用户的PAM 一般默认的pam文件即可实现仅本地用户认证, 保持默认即可, 不同的系统的默认pam文件内容也不同 Arch Linux #%PAM-1.0 # auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL ## Standard behaviour for ftpd(8). #auth required pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed # ## Note: vsftpd handles anonymous logins on its own. Do not enable pam_ftp.so. # ## Standard pam includes @include common-account @include common-session @include common-auth auth required pam_shells.so 同时允许本地和虚拟用户的PAM 由于Arch Linux和Ubuntu默认的PAM文件不一样, 所以两个配置有所不同. 如果简单地允许本地和虚拟用户的PAM加在一起, 结果并不是同时允许本地用户和虚拟用户, 因为文档中描述required和requisite都会在验证失败时直接返回失败, 而sufficient在本次验证失败, 则会继续进行后续模块的验证, 所以我的做法是将虚拟用户的验证模块由required变更为sufficient后添加到本地用户验证模块之前.1 required failure of such a PAM will ultimately lead to the PAM-API returning failure but only after the remaining stacked modules (for this service and type) have been invoked requisite like required, however, in the case that such a module returns a failure, control is directly returned to the application. sufficient success of such a module is enough to satisfy the authentication requirements of the stack of modules (if a prior required module has failed the success of this one is ignored). A failure of this module is not deemed as fatal to satisfying the application that this type has succeeded. If the module succeeds the PAM framework returns success to the application immediately without trying any other modules. Arch Linux pam_pwdfile模块需要在archlinux.org中的AUR自行安装 #%PAM-1.0 # auth sufficient /lib/security/pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient /lib/security/pam_permit.so auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL Ubuntu WSL 的配置直接将虚拟用户认证模块粘贴到@include之前不能达到期望的结果, 于是参照 Arch Linux 的配置改为如下后成功, auth sufficient pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient pam_permit.so auth required pam_listfile.so item=user sense=deny file=/etc/vsftpd.ftpusers onerr=succeed auth required pam_unix.so shadow nullok auth required pam_shells.so account required pam_unix.so session required pam_unix.so 虚拟用户的passwd文件 这个文件的路径和文件名都写在pam模块中, 如同时允许虚拟用户和本地用户登录的Arch Linux的pam配置的第一行有效行 文件格式就是每行以用户名为起始, 冒号分隔, 后接MD5加密的密码 密码加密可以使用openssl passwd -1 -noverify ${yourPasswd}来加密, 只需要将此命令的输出作为加密后密码追加在冒号之后即可 报错总结 500 OOPS: cannot locate user entry:2 如果是虚拟用户登录时报错, 需要检查guest_enable选项是否为YES以及guest_username是否合法; 如果是本地用户, 则需要检查是否时用户名拼写错误 https://www.linuxquestions.org/questions/linux-software-2/how-to-enable-both-virtual-and-local-vsftpd-logins-with-pam-365860/ &#8617; https://ubuntuforums.org/showthread.php?t=1679782 &#8617;" />
+<link rel="canonical" href="/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html" />
+<meta property="og:url" content="/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html" />
+<meta property="og:site_name" content="Leafee’s Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-08-15T09:39:54+08:00" />
+<script type="application/ld+json">
+{"description":"vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为两个方面 配置pam模块 (见下方小标题) 创建认证信息文件(passwd文件) (见下方小标题) 选项简介 nopriv_user=nobody – 当vsftpd什么都不需要的时候, 会使用此用户的权限等级, 建议此用户无任何特殊权限, 这样即便vsftpd被黑掉, 黑客也是什么都干不了 secure_chroot_dir – 当vsftpd不再需要访问文件系统时, 会chroot到这个目录. 此目录应当是空的, 并且不应当被ftp用户可写 pam_service_name=vsftpd – 即/etc/pam.d/目录下的vsftpd所用的pam配置的文件 PAM模块 pam (Pluggable Authentication Modules)为应用和服务提供动态的认证支持, pam模块一般在/lib/security/或/lib/(arch_type)/security下. 仅虚拟用户的PAM # 文件为 /etc/pam.d/vsftpd # 使用 pam_pwdfile.so 模块来进行虚拟用户的认证, 使用的文件为/etc/vsftpd/.passwd # 且文件内容格式为每行起始为用户名, 冒号分隔, 后接md5加密后的密码. example: # test:$1$aT64AHTK$/xRnwvHafFmTzo6GpaCZL/ auth required pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account required pam_permit.so 仅本地用户的PAM 一般默认的pam文件即可实现仅本地用户认证, 保持默认即可, 不同的系统的默认pam文件内容也不同 Arch Linux #%PAM-1.0 # auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL ## Standard behaviour for ftpd(8). #auth required pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed # ## Note: vsftpd handles anonymous logins on its own. Do not enable pam_ftp.so. # ## Standard pam includes @include common-account @include common-session @include common-auth auth required pam_shells.so 同时允许本地和虚拟用户的PAM 由于Arch Linux和Ubuntu默认的PAM文件不一样, 所以两个配置有所不同. 如果简单地允许本地和虚拟用户的PAM加在一起, 结果并不是同时允许本地用户和虚拟用户, 因为文档中描述required和requisite都会在验证失败时直接返回失败, 而sufficient在本次验证失败, 则会继续进行后续模块的验证, 所以我的做法是将虚拟用户的验证模块由required变更为sufficient后添加到本地用户验证模块之前.1 required failure of such a PAM will ultimately lead to the PAM-API returning failure but only after the remaining stacked modules (for this service and type) have been invoked requisite like required, however, in the case that such a module returns a failure, control is directly returned to the application. sufficient success of such a module is enough to satisfy the authentication requirements of the stack of modules (if a prior required module has failed the success of this one is ignored). A failure of this module is not deemed as fatal to satisfying the application that this type has succeeded. If the module succeeds the PAM framework returns success to the application immediately without trying any other modules. Arch Linux pam_pwdfile模块需要在archlinux.org中的AUR自行安装 #%PAM-1.0 # auth sufficient /lib/security/pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient /lib/security/pam_permit.so auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL Ubuntu WSL 的配置直接将虚拟用户认证模块粘贴到@include之前不能达到期望的结果, 于是参照 Arch Linux 的配置改为如下后成功, auth sufficient pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient pam_permit.so auth required pam_listfile.so item=user sense=deny file=/etc/vsftpd.ftpusers onerr=succeed auth required pam_unix.so shadow nullok auth required pam_shells.so account required pam_unix.so session required pam_unix.so 虚拟用户的passwd文件 这个文件的路径和文件名都写在pam模块中, 如同时允许虚拟用户和本地用户登录的Arch Linux的pam配置的第一行有效行 文件格式就是每行以用户名为起始, 冒号分隔, 后接MD5加密的密码 密码加密可以使用openssl passwd -1 -noverify ${yourPasswd}来加密, 只需要将此命令的输出作为加密后密码追加在冒号之后即可 报错总结 500 OOPS: cannot locate user entry:2 如果是虚拟用户登录时报错, 需要检查guest_enable选项是否为YES以及guest_username是否合法; 如果是本地用户, 则需要检查是否时用户名拼写错误 https://www.linuxquestions.org/questions/linux-software-2/how-to-enable-both-virtual-and-local-vsftpd-logins-with-pam-365860/ &#8617; https://ubuntuforums.org/showthread.php?t=1679782 &#8617;","@type":"BlogPosting","headline":"vsftp 配置","dateModified":"2019-08-15T09:39:54+08:00","datePublished":"2019-08-15T09:39:54+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html"},"url":"/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="Leafee's Blog" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Leafee&#39;s Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/tags.html">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">vsftp 配置</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2019-08-15T09:39:54+08:00" itemprop="datePublished">Aug 15, 2019
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="vsftpd虚拟用户的配置">vsftpd虚拟用户的配置</h2>
+
+<p>配置vsftpd的虚拟用户简单分为两个方面</p>
+
+<ol>
+  <li>配置pam模块                                    (见下方小标题)</li>
+  <li>创建认证信息文件(passwd文件)     (见下方小标题)</li>
+</ol>
+
+<h2 id="选项简介">选项简介</h2>
+
+<p><code class="highlighter-rouge">nopriv_user=nobody</code> – 当vsftpd什么都不需要的时候, 会使用此用户的权限等级, 建议此用户无任何特殊权限, <em>这样即便vsftpd被黑掉, 黑客也是什么都干不了</em></p>
+
+<p><code class="highlighter-rouge">secure_chroot_dir</code> – 当vsftpd不再需要访问文件系统时, 会chroot到这个目录. 此目录应当是空的, 并且不应当被ftp用户可写</p>
+
+<p><code class="highlighter-rouge">pam_service_name=vsftpd</code> – 即<code class="highlighter-rouge">/etc/pam.d/</code>目录下的vsftpd所用的pam配置的文件</p>
+
+<h2 id="pam模块">PAM模块</h2>
+
+<p>pam (<em>Pluggable Authentication Modules</em>)为应用和服务提供动态的认证支持, pam模块一般在<code class="highlighter-rouge">/lib/security/</code>或<code class="highlighter-rouge">/lib/(arch_type)/security</code>下.</p>
+
+<h3 id="仅虚拟用户的pam">仅虚拟用户的PAM</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 文件为 /etc/pam.d/vsftpd
+
+# 使用 pam_pwdfile.so 模块来进行虚拟用户的认证, 使用的文件为/etc/vsftpd/.passwd
+# 且文件内容格式为每行起始为用户名, 冒号分隔, 后接md5加密后的密码. example:
+# test:$1$aT64AHTK$/xRnwvHafFmTzo6GpaCZL/
+auth required pam_pwdfile.so pwdfile /etc/vsftpd/.passwd
+account required pam_permit.so
+</code></pre></div></div>
+
+<h3 id="仅本地用户的pam">仅本地用户的PAM</h3>
+
+<p>一般默认的pam文件即可实现仅本地用户认证, 保持默认即可, 不同的系统的默认pam文件内容也不同</p>
+
+<p><strong>Arch Linux</strong></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#%PAM-1.0
+#
+auth       required	/lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed
+auth       required	/lib/security/pam_unix.so shadow nullok
+auth       required	/lib/security/pam_shells.so
+account    required	/lib/security/pam_unix.so
+session    required	/lib/security/pam_unix.so
+
+</code></pre></div></div>
+
+<p><strong>Ubuntu WSL</strong></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>## Standard behaviour for ftpd(8).
+#auth   required        pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed
+#
+## Note: vsftpd handles anonymous logins on its own. Do not enable pam_ftp.so.
+#
+## Standard pam includes
+
+@include common-account
+@include common-session
+@include common-auth
+auth   required        pam_shells.so
+</code></pre></div></div>
+
+<h3 id="同时允许本地和虚拟用户的pam">同时允许本地和虚拟用户的PAM</h3>
+
+<p>由于Arch Linux和Ubuntu默认的PAM文件不一样, 所以两个配置有所不同.</p>
+
+<p>如果简单地允许本地和虚拟用户的PAM加在一起, 结果并不是同时允许本地用户和虚拟用户, 因为文档中描述<code class="highlighter-rouge">required</code>和<code class="highlighter-rouge">requisite</code>都会在验证失败时直接返回失败, 而<code class="highlighter-rouge">sufficient</code>在本次验证失败, 则会继续进行后续模块的验证, 所以我的做法是将虚拟用户的验证模块由<code class="highlighter-rouge">required</code>变更为<code class="highlighter-rouge">sufficient</code>后添加到本地用户验证模块之前.<sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup></p>
+
+<blockquote>
+  <ul>
+    <li>required
+   failure of such a PAM will ultimately lead to the PAM-API returning failure   but only after the remaining stacked modules (for this service and type)   have been invoked</li>
+    <li>requisite
+   like required, however, in the case that such a module returns a failure,   control is directly returned to the application.</li>
+    <li>sufficient
+   success of such a module is enough to satisfy the authentication   requirements of the stack of modules (if a prior required module has failed   the success of this one is ignored). A failure of this module is not deemed   as fatal to satisfying the application that this type has succeeded. If the   module succeeds the PAM framework returns success to the application   immediately without trying any other modules.</li>
+  </ul>
+</blockquote>
+
+<p><strong>Arch Linux</strong></p>
+
+<p><code class="highlighter-rouge">pam_pwdfile</code>模块需要在<a href="archlinux.org">archlinux.org</a>中的AUR自行安装</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#%PAM-1.0
+#
+auth       sufficient /lib/security/pam_pwdfile.so pwdfile /etc/vsftpd/.passwd
+account    sufficient /lib/security/pam_permit.so
+
+auth       required	/lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed
+auth       required	/lib/security/pam_unix.so shadow nullok
+auth       required	/lib/security/pam_shells.so
+account    required	/lib/security/pam_unix.so
+session    required	/lib/security/pam_unix.so
+</code></pre></div></div>
+
+<p><strong>Ubuntu WSL</strong></p>
+
+<p>Ubuntu WSL 的配置直接将虚拟用户认证模块粘贴到<code class="highlighter-rouge">@include</code>之前不能达到期望的结果, 于是参照 Arch Linux 的配置改为如下后成功,</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>auth     sufficient pam_pwdfile.so pwdfile /etc/vsftpd/.passwd
+account  sufficient pam_permit.so
+
+auth required pam_listfile.so item=user sense=deny file=/etc/vsftpd.ftpusers onerr=succeed
+auth required pam_unix.so shadow nullok
+auth required pam_shells.so
+account required pam_unix.so
+session required pam_unix.so
+</code></pre></div></div>
+
+<h2 id="虚拟用户的passwd文件">虚拟用户的passwd文件</h2>
+
+<p>这个文件的路径和文件名都写在pam模块中, 如同时允许虚拟用户和本地用户登录的Arch Linux的pam配置的第一行有效行</p>
+
+<p>文件格式就是每行以用户名为起始, 冒号分隔, 后接MD5加密的密码</p>
+
+<p>密码加密可以使用<code class="highlighter-rouge">openssl passwd -1 -noverify ${yourPasswd}</code>来加密, 只需要将此命令的输出作为加密后密码追加在冒号之后即可</p>
+
+<h2 id="报错总结">报错总结</h2>
+
+<p><strong>500 OOPS: cannot locate user entry:</strong><sup id="fnref:2"><a href="#fn:2" class="footnote">2</a></sup></p>
+
+<p>如果是虚拟用户登录时报错, 需要检查<code class="highlighter-rouge">guest_enable</code>选项是否为<code class="highlighter-rouge">YES</code>以及<code class="highlighter-rouge">guest_username</code>是否合法; 如果是本地用户, 则需要检查是否时用户名拼写错误</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>https://www.linuxquestions.org/questions/linux-software-2/how-to-enable-both-virtual-and-local-vsftpd-logins-with-pam-365860/ <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>https://ubuntuforums.org/showthread.php?t=1679782 <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div><a class="u-url" href="/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Leafee&#39;s Blog</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Leafee&#39;s Blog</li><li><a class="u-email" href="mailto:leafee98@hotmail.com">leafee98@hotmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/leafee98"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">leafee98</span></a></li><li><a href="https://www.twitter.com/leafee98"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">leafee98</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Leafee&#39;s blog based on jekyll</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

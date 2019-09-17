@@ -1,0 +1,1173 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.6">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2019-09-17T14:33:54+08:00</updated><id>/feed.xml</id><title type="html">Leafee’s Blog</title><subtitle>Leafee's blog based on jekyll</subtitle><entry><title type="html">Linux计划任务 – crontab</title><link href="/linux/2019/09/17/Linux%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-crontab.html" rel="alternate" type="text/html" title="Linux计划任务 -- crontab" /><published>2019-09-17T11:04:15+08:00</published><updated>2019-09-17T11:04:15+08:00</updated><id>/linux/2019/09/17/Linux%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1%20--%20crontab</id><content type="html" xml:base="/linux/2019/09/17/Linux%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-crontab.html">&lt;h2 id=&quot;使用语法&quot;&gt;使用语法&lt;/h2&gt;
+
+&lt;p&gt;crontab 的每行命令有5个日期时间部分，5个部分之间使用space或tab分隔，后面接着需要执行的命令&lt;/p&gt;
+
+&lt;h4 id=&quot;时间日期部分&quot;&gt;时间日期部分&lt;/h4&gt;
+
+&lt;p&gt;这一部分语法如下，但是如果不准备深入了解，可以在&lt;a href=&quot;crontab.guru&quot;&gt;crontab guru&lt;/a&gt;来简单地配置需要的时间&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mm hh DD MM &lt;span class=&quot;nb&quot;&gt;dd&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# mm : minute (0-59)&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# hh : hour (0-23)&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# DD : day of month (1-31)&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# MM : month (1-12)(or use name)&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# dd : day of week (0-7)(0 or 7 is sunday)(or use name)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;每一个日期时间的部分都可以使用范围表示&lt;code class=&quot;highlighter-rouge&quot;&gt;0 0 1 1 1-4&lt;/code&gt;即&lt;code class=&quot;highlighter-rouge&quot;&gt;0分 0时 1日 1月 周1至周4&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;使用星号表示该区域的值可以为任意值&lt;code class=&quot;highlighter-rouge&quot;&gt;0 0 1 * *&lt;/code&gt;即&lt;code class=&quot;highlighter-rouge&quot;&gt;0分 0时 1日 任意月 一周内任意天&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;使用逗号可以并列多个允许时间&lt;code class=&quot;highlighter-rouge&quot;&gt;0 0 * * 1,5&lt;/code&gt;表示&lt;code class=&quot;highlighter-rouge&quot;&gt;0分 0时 0 任意日 任意月 周一和周五&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;使用斜杠可以设定步长&lt;code class=&quot;highlighter-rouge&quot;&gt;* */2 * * *&lt;/code&gt;表示&lt;code class=&quot;highlighter-rouge&quot;&gt;每两个小时&lt;/code&gt;，&lt;code class=&quot;highlighter-rouge&quot;&gt;1-7/2&lt;/code&gt;表示&lt;code class=&quot;highlighter-rouge&quot;&gt;1,3,5,7&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;月和周可以使用英文名称，但是列表（逗号分隔）和范围（短横线）将会不再可用&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;时间的另一种表示&quot;&gt;时间的另一种表示&lt;/h4&gt;
+
+&lt;p&gt;除使用5段字符来描述运行的时间外，还可以使用内置的8个字符串来代替这5段字符，这8个字符串中只有&lt;code class=&quot;highlighter-rouge&quot;&gt;@reboot&lt;/code&gt;是无法用5段字符描述，并且它指示的时间是守护进程&lt;code class=&quot;highlighter-rouge&quot;&gt;cron&lt;/code&gt;启动的时间，所以具体的启动时机与系统的启动顺序有关&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;@reboot &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; run once, at startup
+@yearly &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; run once a year &lt;span class=&quot;s1&quot;&gt;'0 0 1 1 *'&lt;/span&gt;
+@annually &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;same as @yearly&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+@monthly &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; run once a month &lt;span class=&quot;s1&quot;&gt;'0 0 1 * *'&lt;/span&gt;
+@weekly &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; run once a week &lt;span class=&quot;s1&quot;&gt;'0 0 * * 0'&lt;/span&gt;
+@daily &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; run once a day &lt;span class=&quot;s1&quot;&gt;'0 0 * * *'&lt;/span&gt;
+@midnight &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;same as @daily&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+@hourly &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; run once an hour &lt;span class=&quot;s1&quot;&gt;'0 * * * *'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;命令部分&quot;&gt;命令部分&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;百分号后的字符会以标准输入的方式输入给命令，除非使用反斜杠escape&lt;/li&gt;
+  &lt;li&gt;结尾使用反斜杠&lt;strong&gt;不可以&lt;/strong&gt;将命令另起一行而不打断命令&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;注意事项&quot;&gt;注意事项&lt;/h2&gt;
+
+&lt;h4 id=&quot;环境变量&quot;&gt;环境变量&lt;/h4&gt;
+
+&lt;p&gt;设定环境变量只需要使用&lt;code class=&quot;highlighter-rouge&quot;&gt;key = value&lt;/code&gt;即可，每一条环境变量的赋值命令都需要另起一行，等号两边的空格是可选的，其中的&lt;code class=&quot;highlighter-rouge&quot;&gt;value&lt;/code&gt;可选被引号包括，单双引号均可但必须匹配，设定空值时必须使用引号&lt;/p&gt;
+
+&lt;p&gt;这些环境变量可以在命令部分使用，但是环境变量时，使用美元符号引用之前的变量的用法将失效，如以下的命令将不再以期望的方式运行&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;a &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 1
+b &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 2
+c &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$a&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$b&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;crontab的环境变量与普通shell环境有所不同，它采用的shell是&lt;code class=&quot;highlighter-rouge&quot;&gt;/bin/sh&lt;/code&gt;, 并且&lt;code class=&quot;highlighter-rouge&quot;&gt;path=/usr/bin:/bin&lt;/code&gt;，修改默认shell和mailto的示例如下&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SHELL = /bin/bash
+MAILTO = paul
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;时区&quot;&gt;时区&lt;/h4&gt;
+
+&lt;p&gt;cron的时间与当前时区有关，然而由于时区不能由各用户自定义，所以整个系统的cron只能按照统一的一个时区来工作&lt;/p&gt;</content><author><name></name></author><category term="linux" /><category term="crontab" /><summary type="html">使用语法</summary></entry><entry><title type="html">Linux服务 – systemd.unit</title><link href="/linux/2019/09/14/Linux%E6%9C%8D%E5%8A%A1-systemd.unit.html" rel="alternate" type="text/html" title="Linux服务 -- systemd.unit" /><published>2019-09-14T04:09:45+08:00</published><updated>2019-09-14T04:09:45+08:00</updated><id>/linux/2019/09/14/Linux%E6%9C%8D%E5%8A%A1----systemd.unit</id><content type="html" xml:base="/linux/2019/09/14/Linux%E6%9C%8D%E5%8A%A1-systemd.unit.html">&lt;h2 id=&quot;概括&quot;&gt;概括&lt;/h2&gt;
+
+&lt;p&gt;通过&lt;code class=&quot;highlighter-rouge&quot;&gt;systemctl&lt;/code&gt;命令可以对服务进行一些基本操作, 包括启动,停止,重启等, 而这条命令操作的服务的位置就在&lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/systemd/system&lt;/code&gt;目录下, 如果想要我们想要创建一个自己的服务用于开机自动运行, 只需要在这个目录下创建一个名为&lt;code class=&quot;highlighter-rouge&quot;&gt;{your service name}.service&lt;/code&gt;的文本文件即可, 最简单的服务只需要在文件内写出&lt;code class=&quot;highlighter-rouge&quot;&gt;[Service]&lt;/code&gt;部分中的&lt;code class=&quot;highlighter-rouge&quot;&gt;ExecStart&lt;/code&gt;即可运行服务.&lt;/p&gt;
+
+&lt;h2 id=&quot;linux服务&quot;&gt;Linux服务&lt;/h2&gt;
+
+&lt;p&gt;Linux服务一般通过&lt;code class=&quot;highlighter-rouge&quot;&gt;systemctl&lt;/code&gt;进行管理, 诸如&lt;code class=&quot;highlighter-rouge&quot;&gt;systemctl start {service name}&lt;/code&gt;启动某服务, 优点就是十分统一, 并且使得各种各样的服务有条理地运行, 不至于发生一个服务明明需要另一个服务的功能, 却在另一个服务运行之前启动, 造成启动失败或者异常.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;systemctl status {service name}&lt;/code&gt;可以查看服务的状态, 同时会显示出服务最近的几行日志, 如果需要查看更多的日志, 可以使用&lt;code class=&quot;highlighter-rouge&quot;&gt;journalctl -u {service name}&lt;/code&gt;, 其中&lt;code class=&quot;highlighter-rouge&quot;&gt;-u&lt;/code&gt;参数是指定unit&lt;/p&gt;
+
+&lt;h2 id=&quot;service文件&quot;&gt;service文件&lt;/h2&gt;
+
+&lt;p&gt;常用的部分有三个:&lt;code class=&quot;highlighter-rouge&quot;&gt;Unit&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;Service&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;Install&lt;/code&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;unit&quot;&gt;Unit&lt;/h4&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Unit&lt;/code&gt;部分是&lt;code class=&quot;highlighter-rouge&quot;&gt;systemctl&lt;/code&gt;管理的众多模块的通用配置的部分, 这一部分可以写&lt;code class=&quot;highlighter-rouge&quot;&gt;Description&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;After&lt;/code&gt;等. &lt;code class=&quot;highlighter-rouge&quot;&gt;Description&lt;/code&gt;就是描述, 在&lt;code class=&quot;highlighter-rouge&quot;&gt;status&lt;/code&gt;作为参数的时候可以在状态的部分看到这里写的描述; &lt;code class=&quot;highlighter-rouge&quot;&gt;After&lt;/code&gt;就是指定服务启动的顺序, &lt;code class=&quot;highlighter-rouge&quot;&gt;systemd&lt;/code&gt;会读取所有模块(Unit), 根据&lt;code class=&quot;highlighter-rouge&quot;&gt;Before&lt;/code&gt;,&lt;code class=&quot;highlighter-rouge&quot;&gt;After&lt;/code&gt;,&lt;code class=&quot;highlighter-rouge&quot;&gt;Require&lt;/code&gt;等参数构造出一个不会对任何模块造成冲突的启动顺序, 然后依次启动服务, 对于&lt;code class=&quot;highlighter-rouge&quot;&gt;Require&lt;/code&gt;等参数在前置服务启动失败时还可以指定特殊的行为&lt;/p&gt;
+
+&lt;h4 id=&quot;service&quot;&gt;Service&lt;/h4&gt;
+
+&lt;p&gt;这一部分就是服务的主体部分, 最最最重要的就是&lt;code class=&quot;highlighter-rouge&quot;&gt;ExecStart&lt;/code&gt;参数, 即启动服务时运行的命令, 其他的诸如&lt;code class=&quot;highlighter-rouge&quot;&gt;ExecStop&lt;/code&gt;,&lt;code class=&quot;highlighter-rouge&quot;&gt;ExecReload&lt;/code&gt;等就是停止和启动服务时运行的命令.&lt;/p&gt;
+
+&lt;p&gt;另一个比较重要的参数就是&lt;code class=&quot;highlighter-rouge&quot;&gt;User&lt;/code&gt;, 这个参数表示以特定用户的身份启动服务.&lt;/p&gt;
+
+&lt;h4 id=&quot;install&quot;&gt;Install&lt;/h4&gt;
+
+&lt;p&gt;这一部分是在服务需要开机启动时必须的项, 使用&lt;code class=&quot;highlighter-rouge&quot;&gt;systemctl enable {service name}&lt;/code&gt; 可以使服务在开机时启动, 其实也就是在特定目录下创建一个指向服务文件的软链接&lt;/p&gt;
+
+&lt;h2 id=&quot;示例&quot;&gt;示例&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[Unit]
+Description=syncthing service for leafee98
+After=network.target
+
+[Service]
+User=leafee98
+ExecStart=/usr/bin/syncthing -no-browser -gui-address=0.0.0.0:8384 -home=/mnt/leafee98/syncthing/syncHome/
+
+[Install]
+WantedBy=multi-user.target
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name></name></author><category term="linux" /><category term="systemctl" /><summary type="html">概括 通过systemctl命令可以对服务进行一些基本操作, 包括启动,停止,重启等, 而这条命令操作的服务的位置就在/etc/systemd/system目录下, 如果想要我们想要创建一个自己的服务用于开机自动运行, 只需要在这个目录下创建一个名为{your service name}.service的文本文件即可, 最简单的服务只需要在文件内写出[Service]部分中的ExecStart即可运行服务. Linux服务 Linux服务一般通过systemctl进行管理, 诸如systemctl start {service name}启动某服务, 优点就是十分统一, 并且使得各种各样的服务有条理地运行, 不至于发生一个服务明明需要另一个服务的功能, 却在另一个服务运行之前启动, 造成启动失败或者异常. systemctl status {service name}可以查看服务的状态, 同时会显示出服务最近的几行日志, 如果需要查看更多的日志, 可以使用journalctl -u {service name}, 其中-u参数是指定unit service文件 常用的部分有三个:Unit, Service, Install Unit Unit部分是systemctl管理的众多模块的通用配置的部分, 这一部分可以写Description, After等. Description就是描述, 在status作为参数的时候可以在状态的部分看到这里写的描述; After就是指定服务启动的顺序, systemd会读取所有模块(Unit), 根据Before,After,Require等参数构造出一个不会对任何模块造成冲突的启动顺序, 然后依次启动服务, 对于Require等参数在前置服务启动失败时还可以指定特殊的行为 Service 这一部分就是服务的主体部分, 最最最重要的就是ExecStart参数, 即启动服务时运行的命令, 其他的诸如ExecStop,ExecReload等就是停止和启动服务时运行的命令. 另一个比较重要的参数就是User, 这个参数表示以特定用户的身份启动服务. Install 这一部分是在服务需要开机启动时必须的项, 使用systemctl enable {service name} 可以使服务在开机时启动, 其实也就是在特定目录下创建一个指向服务文件的软链接 示例 [Unit] Description=syncthing service for leafee98 After=network.target [Service] User=leafee98 ExecStart=/usr/bin/syncthing -no-browser -gui-address=0.0.0.0:8384 -home=/mnt/leafee98/syncthing/syncHome/ [Install] WantedBy=multi-user.target</summary></entry><entry><title type="html">vsftp 配置</title><link href="/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html" rel="alternate" type="text/html" title="vsftp 配置" /><published>2019-08-15T09:39:54+08:00</published><updated>2019-08-15T09:39:54+08:00</updated><id>/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE</id><content type="html" xml:base="/linux/2019/08/15/vsftp%E9%85%8D%E7%BD%AE.html">&lt;h2 id=&quot;vsftpd虚拟用户的配置&quot;&gt;vsftpd虚拟用户的配置&lt;/h2&gt;
+
+&lt;p&gt;配置vsftpd的虚拟用户简单分为两个方面&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;配置pam模块                                    (见下方小标题)&lt;/li&gt;
+  &lt;li&gt;创建认证信息文件(passwd文件)     (见下方小标题)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;选项简介&quot;&gt;选项简介&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;nopriv_user=nobody&lt;/code&gt; – 当vsftpd什么都不需要的时候, 会使用此用户的权限等级, 建议此用户无任何特殊权限, &lt;em&gt;这样即便vsftpd被黑掉, 黑客也是什么都干不了&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;secure_chroot_dir&lt;/code&gt; – 当vsftpd不再需要访问文件系统时, 会chroot到这个目录. 此目录应当是空的, 并且不应当被ftp用户可写&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pam_service_name=vsftpd&lt;/code&gt; – 即&lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/pam.d/&lt;/code&gt;目录下的vsftpd所用的pam配置的文件&lt;/p&gt;
+
+&lt;h2 id=&quot;pam模块&quot;&gt;PAM模块&lt;/h2&gt;
+
+&lt;p&gt;pam (&lt;em&gt;Pluggable Authentication Modules&lt;/em&gt;)为应用和服务提供动态的认证支持, pam模块一般在&lt;code class=&quot;highlighter-rouge&quot;&gt;/lib/security/&lt;/code&gt;或&lt;code class=&quot;highlighter-rouge&quot;&gt;/lib/(arch_type)/security&lt;/code&gt;下.&lt;/p&gt;
+
+&lt;h3 id=&quot;仅虚拟用户的pam&quot;&gt;仅虚拟用户的PAM&lt;/h3&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 文件为 /etc/pam.d/vsftpd
+
+# 使用 pam_pwdfile.so 模块来进行虚拟用户的认证, 使用的文件为/etc/vsftpd/.passwd
+# 且文件内容格式为每行起始为用户名, 冒号分隔, 后接md5加密后的密码. example:
+# test:$1$aT64AHTK$/xRnwvHafFmTzo6GpaCZL/
+auth required pam_pwdfile.so pwdfile /etc/vsftpd/.passwd
+account required pam_permit.so
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;仅本地用户的pam&quot;&gt;仅本地用户的PAM&lt;/h3&gt;
+
+&lt;p&gt;一般默认的pam文件即可实现仅本地用户认证, 保持默认即可, 不同的系统的默认pam文件内容也不同&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Arch Linux&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#%PAM-1.0
+#
+auth       required	/lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed
+auth       required	/lib/security/pam_unix.so shadow nullok
+auth       required	/lib/security/pam_shells.so
+account    required	/lib/security/pam_unix.so
+session    required	/lib/security/pam_unix.so
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Ubuntu WSL&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;## Standard behaviour for ftpd(8).
+#auth   required        pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed
+#
+## Note: vsftpd handles anonymous logins on its own. Do not enable pam_ftp.so.
+#
+## Standard pam includes
+
+@include common-account
+@include common-session
+@include common-auth
+auth   required        pam_shells.so
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;同时允许本地和虚拟用户的pam&quot;&gt;同时允许本地和虚拟用户的PAM&lt;/h3&gt;
+
+&lt;p&gt;由于Arch Linux和Ubuntu默认的PAM文件不一样, 所以两个配置有所不同.&lt;/p&gt;
+
+&lt;p&gt;如果简单地允许本地和虚拟用户的PAM加在一起, 结果并不是同时允许本地用户和虚拟用户, 因为文档中描述&lt;code class=&quot;highlighter-rouge&quot;&gt;required&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;requisite&lt;/code&gt;都会在验证失败时直接返回失败, 而&lt;code class=&quot;highlighter-rouge&quot;&gt;sufficient&lt;/code&gt;在本次验证失败, 则会继续进行后续模块的验证, 所以我的做法是将虚拟用户的验证模块由&lt;code class=&quot;highlighter-rouge&quot;&gt;required&lt;/code&gt;变更为&lt;code class=&quot;highlighter-rouge&quot;&gt;sufficient&lt;/code&gt;后添加到本地用户验证模块之前.&lt;sup id=&quot;fnref:1&quot;&gt;&lt;a href=&quot;#fn:1&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;ul&gt;
+    &lt;li&gt;required
+   failure of such a PAM will ultimately lead to the PAM-API returning failure   but only after the remaining stacked modules (for this service and type)   have been invoked&lt;/li&gt;
+    &lt;li&gt;requisite
+   like required, however, in the case that such a module returns a failure,   control is directly returned to the application.&lt;/li&gt;
+    &lt;li&gt;sufficient
+   success of such a module is enough to satisfy the authentication   requirements of the stack of modules (if a prior required module has failed   the success of this one is ignored). A failure of this module is not deemed   as fatal to satisfying the application that this type has succeeded. If the   module succeeds the PAM framework returns success to the application   immediately without trying any other modules.&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;strong&gt;Arch Linux&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pam_pwdfile&lt;/code&gt;模块需要在&lt;a href=&quot;archlinux.org&quot;&gt;archlinux.org&lt;/a&gt;中的AUR自行安装&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#%PAM-1.0
+#
+auth       sufficient /lib/security/pam_pwdfile.so pwdfile /etc/vsftpd/.passwd
+account    sufficient /lib/security/pam_permit.so
+
+auth       required	/lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed
+auth       required	/lib/security/pam_unix.so shadow nullok
+auth       required	/lib/security/pam_shells.so
+account    required	/lib/security/pam_unix.so
+session    required	/lib/security/pam_unix.so
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Ubuntu WSL&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Ubuntu WSL 的配置直接将虚拟用户认证模块粘贴到&lt;code class=&quot;highlighter-rouge&quot;&gt;@include&lt;/code&gt;之前不能达到期望的结果, 于是参照 Arch Linux 的配置改为如下后成功,&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;auth     sufficient pam_pwdfile.so pwdfile /etc/vsftpd/.passwd
+account  sufficient pam_permit.so
+
+auth required pam_listfile.so item=user sense=deny file=/etc/vsftpd.ftpusers onerr=succeed
+auth required pam_unix.so shadow nullok
+auth required pam_shells.so
+account required pam_unix.so
+session required pam_unix.so
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;虚拟用户的passwd文件&quot;&gt;虚拟用户的passwd文件&lt;/h2&gt;
+
+&lt;p&gt;这个文件的路径和文件名都写在pam模块中, 如同时允许虚拟用户和本地用户登录的Arch Linux的pam配置的第一行有效行&lt;/p&gt;
+
+&lt;p&gt;文件格式就是每行以用户名为起始, 冒号分隔, 后接MD5加密的密码&lt;/p&gt;
+
+&lt;p&gt;密码加密可以使用&lt;code class=&quot;highlighter-rouge&quot;&gt;openssl passwd -1 -noverify ${yourPasswd}&lt;/code&gt;来加密, 只需要将此命令的输出作为加密后密码追加在冒号之后即可&lt;/p&gt;
+
+&lt;h2 id=&quot;报错总结&quot;&gt;报错总结&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;500 OOPS: cannot locate user entry:&lt;/strong&gt;&lt;sup id=&quot;fnref:2&quot;&gt;&lt;a href=&quot;#fn:2&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;p&gt;如果是虚拟用户登录时报错, 需要检查&lt;code class=&quot;highlighter-rouge&quot;&gt;guest_enable&lt;/code&gt;选项是否为&lt;code class=&quot;highlighter-rouge&quot;&gt;YES&lt;/code&gt;以及&lt;code class=&quot;highlighter-rouge&quot;&gt;guest_username&lt;/code&gt;是否合法; 如果是本地用户, 则需要检查是否时用户名拼写错误&lt;/p&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:1&quot;&gt;
+      &lt;p&gt;https://www.linuxquestions.org/questions/linux-software-2/how-to-enable-both-virtual-and-local-vsftpd-logins-with-pam-365860/ &lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:2&quot;&gt;
+      &lt;p&gt;https://ubuntuforums.org/showthread.php?t=1679782 &lt;a href=&quot;#fnref:2&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="linux" /><category term="vsftp" /><summary type="html">vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为两个方面 配置pam模块 (见下方小标题) 创建认证信息文件(passwd文件) (见下方小标题) 选项简介 nopriv_user=nobody – 当vsftpd什么都不需要的时候, 会使用此用户的权限等级, 建议此用户无任何特殊权限, 这样即便vsftpd被黑掉, 黑客也是什么都干不了 secure_chroot_dir – 当vsftpd不再需要访问文件系统时, 会chroot到这个目录. 此目录应当是空的, 并且不应当被ftp用户可写 pam_service_name=vsftpd – 即/etc/pam.d/目录下的vsftpd所用的pam配置的文件 PAM模块 pam (Pluggable Authentication Modules)为应用和服务提供动态的认证支持, pam模块一般在/lib/security/或/lib/(arch_type)/security下. 仅虚拟用户的PAM # 文件为 /etc/pam.d/vsftpd # 使用 pam_pwdfile.so 模块来进行虚拟用户的认证, 使用的文件为/etc/vsftpd/.passwd # 且文件内容格式为每行起始为用户名, 冒号分隔, 后接md5加密后的密码. example: # test:$1$aT64AHTK$/xRnwvHafFmTzo6GpaCZL/ auth required pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account required pam_permit.so 仅本地用户的PAM 一般默认的pam文件即可实现仅本地用户认证, 保持默认即可, 不同的系统的默认pam文件内容也不同 Arch Linux #%PAM-1.0 # auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL ## Standard behaviour for ftpd(8). #auth required pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed # ## Note: vsftpd handles anonymous logins on its own. Do not enable pam_ftp.so. # ## Standard pam includes @include common-account @include common-session @include common-auth auth required pam_shells.so 同时允许本地和虚拟用户的PAM 由于Arch Linux和Ubuntu默认的PAM文件不一样, 所以两个配置有所不同. 如果简单地允许本地和虚拟用户的PAM加在一起, 结果并不是同时允许本地用户和虚拟用户, 因为文档中描述required和requisite都会在验证失败时直接返回失败, 而sufficient在本次验证失败, 则会继续进行后续模块的验证, 所以我的做法是将虚拟用户的验证模块由required变更为sufficient后添加到本地用户验证模块之前.1 required failure of such a PAM will ultimately lead to the PAM-API returning failure but only after the remaining stacked modules (for this service and type) have been invoked requisite like required, however, in the case that such a module returns a failure, control is directly returned to the application. sufficient success of such a module is enough to satisfy the authentication requirements of the stack of modules (if a prior required module has failed the success of this one is ignored). A failure of this module is not deemed as fatal to satisfying the application that this type has succeeded. If the module succeeds the PAM framework returns success to the application immediately without trying any other modules. Arch Linux pam_pwdfile模块需要在archlinux.org中的AUR自行安装 #%PAM-1.0 # auth sufficient /lib/security/pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient /lib/security/pam_permit.so auth required /lib/security/pam_listfile.so item=user sense=deny file=/etc/ftpusers onerr=succeed auth required /lib/security/pam_unix.so shadow nullok auth required /lib/security/pam_shells.so account required /lib/security/pam_unix.so session required /lib/security/pam_unix.so Ubuntu WSL Ubuntu WSL 的配置直接将虚拟用户认证模块粘贴到@include之前不能达到期望的结果, 于是参照 Arch Linux 的配置改为如下后成功, auth sufficient pam_pwdfile.so pwdfile /etc/vsftpd/.passwd account sufficient pam_permit.so auth required pam_listfile.so item=user sense=deny file=/etc/vsftpd.ftpusers onerr=succeed auth required pam_unix.so shadow nullok auth required pam_shells.so account required pam_unix.so session required pam_unix.so 虚拟用户的passwd文件 这个文件的路径和文件名都写在pam模块中, 如同时允许虚拟用户和本地用户登录的Arch Linux的pam配置的第一行有效行 文件格式就是每行以用户名为起始, 冒号分隔, 后接MD5加密的密码 密码加密可以使用openssl passwd -1 -noverify ${yourPasswd}来加密, 只需要将此命令的输出作为加密后密码追加在冒号之后即可 报错总结 500 OOPS: cannot locate user entry:2 如果是虚拟用户登录时报错, 需要检查guest_enable选项是否为YES以及guest_username是否合法; 如果是本地用户, 则需要检查是否时用户名拼写错误 https://www.linuxquestions.org/questions/linux-software-2/how-to-enable-both-virtual-and-local-vsftpd-logins-with-pam-365860/ &amp;#8617; https://ubuntuforums.org/showthread.php?t=1679782 &amp;#8617;</summary></entry><entry><title type="html">正则表达式随笔</title><link href="/regular-expression/2019/08/03/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E9%9A%8F%E7%AC%94.html" rel="alternate" type="text/html" title="正则表达式随笔" /><published>2019-08-03T16:03:45+08:00</published><updated>2019-08-03T16:03:45+08:00</updated><id>/regular-expression/2019/08/03/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E9%9A%8F%E7%AC%94</id><content type="html" xml:base="/regular-expression/2019/08/03/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E9%9A%8F%E7%AC%94.html">&lt;h2 id=&quot;posix基础正则表达式&quot;&gt;POSIX基础正则表达式&lt;/h2&gt;
+
+&lt;h3 id=&quot;纯文本&quot;&gt;纯文本&lt;/h3&gt;
+
+&lt;p&gt;以文本形式直接写出需要匹配的内容&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;特殊字符&quot;&gt;特殊字符&lt;/h3&gt;
+
+&lt;p&gt;.*[*\^${}+?\|()&lt;/p&gt;
+
+&lt;h3 id=&quot;锚字符&quot;&gt;锚字符&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;行首 ^&lt;/li&gt;
+  &lt;li&gt;行尾 $&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;^$&lt;/code&gt; ===&amp;gt; 匹配空行&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;点号字符&quot;&gt;点号字符&lt;/h3&gt;
+
+&lt;p&gt;匹配换行字符之外的任意单个字符, 必须匹配一个字符&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a.c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;a c&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;字符组&quot;&gt;字符组&lt;/h3&gt;
+
+&lt;p&gt;使用方括号定义一个字符组, 方括号中包含素有希望出现在该字符组中的字符&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a[bcd]b&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;acb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;adb&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;排除型字符组&quot;&gt;排除型字符组&lt;/h3&gt;
+
+&lt;p&gt;在普通字符组的起始字符写出一个脱字符&lt;code class=&quot;highlighter-rouge&quot;&gt;^&lt;/code&gt;, 即可匹配字符组之外的所有字符, 换行符除外&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a[^bcd]b&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;aab&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;区间&quot;&gt;区间&lt;/h3&gt;
+
+&lt;p&gt;在字符组中单破折号可在字符组中用作区间&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a[b-f]b&lt;/code&gt; = &lt;code class=&quot;highlighter-rouge&quot;&gt;a[bcdef]b&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;acb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;adb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;aeb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;afb&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;特殊字符组&quot;&gt;特殊字符组&lt;/h3&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;组&lt;/th&gt;
+      &lt;th&gt;描述&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:alpha:]]&lt;/td&gt;
+      &lt;td&gt;匹配任意字母字符, 不管大写还是小写&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:alnum:]]&lt;/td&gt;
+      &lt;td&gt;匹配任意字母数字字符0-9, a-z, A-Z&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:blank:]]&lt;/td&gt;
+      &lt;td&gt;匹配空格或制表符&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:digit:]]&lt;/td&gt;
+      &lt;td&gt;匹配0-9之间的数字&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:lower:]]&lt;/td&gt;
+      &lt;td&gt;匹配小写字符a-z&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:print:]]&lt;/td&gt;
+      &lt;td&gt;匹配任意可打印字符&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:punct:]]&lt;/td&gt;
+      &lt;td&gt;匹配标点符号&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:space:]]&lt;/td&gt;
+      &lt;td&gt;匹配任意空白字符: 空格, 制表符, NL, FF, VT和CR&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;[[:upper:]]&lt;/td&gt;
+      &lt;td&gt;匹配任意大写字母字符A-Z&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a[[:alnum:]]c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;a1c&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;a8c&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;星号&quot;&gt;星号&lt;/h3&gt;
+
+&lt;p&gt;在字符后面放置星号表明该字符必须在匹配模式的文本中出现0次或多次&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a[bc]\*c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;acc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;ac&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abcc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abbbbbc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;posix拓展正则表达式&quot;&gt;POSIX拓展正则表达式&lt;/h2&gt;
+
+&lt;h3 id=&quot;问号&quot;&gt;问号&lt;/h3&gt;
+
+&lt;p&gt;在字符后面放置星号表明该字符必须在匹配模式的文本中出现0次或1次&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ab?c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;ac&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;加号&quot;&gt;加号&lt;/h3&gt;
+
+&lt;p&gt;在字符后面放置加号表明该字符必须在匹配模式的文本中出现1次或多次&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ab+c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abbc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abbbc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;花括号&quot;&gt;花括号&lt;/h3&gt;
+
+&lt;p&gt;花括号标识允许为可重复的正则表达式指定一个上下限, 通常称为&lt;strong&gt;间隔&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;m&lt;/code&gt; : 正则表达式准确出现m次&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;m,n&lt;/code&gt; : 正则表达式出现至少m次, 至多n次&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ab{2}c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abbc&lt;/code&gt;&lt;/p&gt;
+
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ab{1,2}c&lt;/code&gt; ===&amp;gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abbc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;竖线&quot;&gt;竖线&lt;/h3&gt;
+
+&lt;p&gt;表示在检查数据流时, 使用逻辑或的方式指定两个或多个匹配模式&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;a(b|c)c&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;acc&lt;/code&gt;&lt;/p&gt;
+
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;abc|abb&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;abc&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;abb&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;圆括号&quot;&gt;圆括号&lt;/h3&gt;
+
+&lt;p&gt;圆括号用于对正则表达式模式进行分组, 分组时, 该组会被视为一个标准字符, 可以向对普通字符一样给该组用特殊字符来限制匹配&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Sat(urday)?&lt;/code&gt; ===&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;Sat&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;Saturday&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;</content><author><name></name></author><category term="regular-expression" /><summary type="html">POSIX基础正则表达式</summary></entry><entry><title type="html">科一知识点总结</title><link href="/drive/2019/08/02/%E7%A7%91%E4%B8%80%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93.html" rel="alternate" type="text/html" title="科一知识点总结" /><published>2019-08-02T21:40:00+08:00</published><updated>2019-08-02T21:40:00+08:00</updated><id>/drive/2019/08/02/%E7%A7%91%E4%B8%80%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93</id><content type="html" xml:base="/drive/2019/08/02/%E7%A7%91%E4%B8%80%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93.html">&lt;blockquote&gt;
+  &lt;p&gt;总结截止于2019年8月2日，之后的知识点或可能不再进行更新。&lt;/p&gt;
+
+  &lt;p&gt;总结中不涉及图标题目，仅对于一些易混淆、需要系统记忆的知识点进行总结。&lt;/p&gt;
+
+  &lt;p&gt;本知识点总结或有纰漏或错误，欢迎添加修改后作为自己的笔记或向他人传播，也可作为一个不权威的参考，在二次传播时（如果有的话）如果能署名，是大大的感谢的！&lt;/p&gt;
+
+  &lt;p&gt;本总结由leafee &lt;a href=&quot;leafee98.github.io&quot;&gt;博客&lt;/a&gt;总结，参照安卓应用《驾考宝典》中部分网友总结、官方答案解释等资料而成。&lt;/p&gt;
+
+  &lt;p&gt;使用本总结所造成的的一切后果，作者不负任何责任。&lt;/p&gt;
+
+  &lt;p&gt;&lt;strong&gt;由于本博客仍在建设中,文章标签和目录可能会有所改动,导致超链接无法导向需要的文章,请尽可能复制一份备用&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;strong&gt;驾驶证禁止申领期限&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;作弊一年&lt;/li&gt;
+  &lt;li&gt;吊销两年&lt;/li&gt;
+  &lt;li&gt;撤销三年&lt;/li&gt;
+  &lt;li&gt;酒驾五年&lt;/li&gt;
+  &lt;li&gt;肇事逃逸、酒驾重大事故终身&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;交通肇事罪&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;交通事故后逃逸的&lt;/li&gt;
+  &lt;li&gt;驾驶安全机件失灵车辆的&lt;/li&gt;
+  &lt;li&gt;无驾驶资格的&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;拘役/有期徒刑年限&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;重大事故 	3年以下&lt;/li&gt;
+  &lt;li&gt;事故逃逸 	3-7年&lt;/li&gt;
+  &lt;li&gt;逃逸致死 	7年以上&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;酒驾&lt;/strong&gt;&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;酒驾类型&lt;/th&gt;
+      &lt;th&gt;处罚&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;酒驾普通车&lt;/td&gt;
+      &lt;td&gt;初次，暂扣6个月驾驶证，1k-2k罚款；再次，10日以下拘留，1k-2k罚款，吊销驾驶证&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;醉驾普通车&lt;/td&gt;
+      &lt;td&gt;公安约束至酒醒，吊销驾驶证5年禁证，追究刑事责任&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;酒驾营运车&lt;/td&gt;
+      &lt;td&gt;15日拘留，5k罚款，吊销驾驶证5年禁证&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;醉驾营运车&lt;/td&gt;
+      &lt;td&gt;公安约束至酒醒，吊销驾驶证10年禁证，且终身不得驾驶营运车辆，追究刑事责任&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;酒醉驾重大事故&lt;/td&gt;
+      &lt;td&gt;终生不得申领驾驶证&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;strong&gt;驾驶证更换&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;有效期满前90日内提交更换申请&lt;/li&gt;
+  &lt;li&gt;信息改动后30日内提交修改申请&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;审验期限&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;审验时，延期不得超过3年&lt;/li&gt;
+  &lt;li&gt;重大事故后未被吊销驾驶证的，记分周期结束后30日内接受审验&lt;/li&gt;
+  &lt;li&gt;申请换证时，需要到公安交管部门接受审验&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;实习期&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;初次申领驾驶证的12个月为实习期&lt;/li&gt;
+  &lt;li&gt;实习期内需在车后粘贴统一的实习标志&lt;/li&gt;
+  &lt;li&gt;实习期内上高速需3年以上驾龄人陪同&lt;/li&gt;
+  &lt;li&gt;实习期内记满12分，注销其实习的准驾车型的驾驶资格&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;普通道路车速&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;无道路中心线
+    &lt;ul&gt;
+      &lt;li&gt;城市道路 		30 km/h&lt;/li&gt;
+      &lt;li&gt;公路        		40 km/h&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;有道路中心线
+    &lt;ul&gt;
+      &lt;li&gt;城市道路 		50 km/h&lt;/li&gt;
+      &lt;li&gt;公路        		70 km/h&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;高速公路车速&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;正常
+    &lt;ul&gt;
+      &lt;li&gt;车速（km/h）
+        &lt;ul&gt;
+          &lt;li&gt;双车道 			100-120，60-100&lt;/li&gt;
+          &lt;li&gt;三车道 			110-120，90-110，60-90&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;车距
+        &lt;ul&gt;
+          &lt;li&gt;车速高于100 km/h，100 m车距&lt;/li&gt;
+          &lt;li&gt;车速低于100 km/h，可适当缩短，但大于50 m&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;低能见度（雾灯、近光灯、示廓灯，前后位灯）
+    &lt;ul&gt;
+      &lt;li&gt;能见度200 m，100 m车距，60 km/h&lt;/li&gt;
+      &lt;li&gt;能见度100 m，50 m车距，40 km/h 		（危险警报闪光灯）&lt;/li&gt;
+      &lt;li&gt;能见度50 m，20 km/h，驶离高速   		（危险警报闪光灯）&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;车辆故障警告标志摆放&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;普通道路 	50-100 m&lt;/li&gt;
+  &lt;li&gt;高速公路 	150 m以外&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;停车远离特殊地点&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;距特殊路段50 m以外 （交叉路口、铁路道口、急弯路、窄路（宽度不足4米）、桥梁、陡坡、隧道）&lt;/li&gt;
+  &lt;li&gt;公共服务设施30 m以外（公共汽车站、急救站、加油站、消防栓、消防队门前）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;罚款&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;200-2000
+    &lt;ul&gt;
+      &lt;li&gt;拼装、报废车辆&lt;/li&gt;
+      &lt;li&gt;超速50%以上&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;200&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;应撤离的交通事故未撤离，且造成拥堵的&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;1000-2000
+    &lt;ul&gt;
+      &lt;li&gt;酒驾普通车&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;其他车速不高于30 km/h的情况&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;进出非机动车道，过铁路口、窄路、急弯路&lt;/li&gt;
+  &lt;li&gt;转弯、掉头、下陡坡&lt;/li&gt;
+  &lt;li&gt;恶劣天气，能见度小于50 m（普通公路）&lt;/li&gt;
+  &lt;li&gt;冰雪、泥泞道路&lt;/li&gt;
+  &lt;li&gt;牵引车辆&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;标志类型&lt;/strong&gt;&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;标志&lt;/th&gt;
+      &lt;th&gt;图形特点&lt;/th&gt;
+      &lt;th&gt;意义&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;警告标志&lt;/td&gt;
+      &lt;td&gt;黄底黑边黑图标，三角&lt;/td&gt;
+      &lt;td&gt;警告车辆行人注意危险地点&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;禁令标志&lt;/td&gt;
+      &lt;td&gt;白底红边一斜线，圆形&lt;/td&gt;
+      &lt;td&gt;禁止或限制行为&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;指示标志&lt;/td&gt;
+      &lt;td&gt;蓝底白边白图标，圆形长方形或正方形&lt;/td&gt;
+      &lt;td&gt;指示车辆、行人行进&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;指路标志&lt;/td&gt;
+      &lt;td&gt;指路标志&lt;/td&gt;
+      &lt;td&gt;提供方向信息&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;strong&gt;标线类型&lt;/strong&gt;&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;标线&lt;/th&gt;
+      &lt;th&gt;意义&lt;/th&gt;
+      &lt;th&gt;举例&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;指示标线&lt;/td&gt;
+      &lt;td&gt;用于指示车行道、行车方向、路面边缘、人行道等设施&lt;/td&gt;
+      &lt;td&gt;可跨越对向车行道分界线（黄色虚线），可跨月同向车行道分界线（白色虚线）、车行道边缘线（边缘白色实线【划分机动车道与非机动车道】、边缘白色虚线【用于车辆越线出入道路】、边缘白色虚实线【用以规范车辆行驶轨迹，如公交车站】、边缘黄色单实线【单行路中在左侧划分对向的非机动车道】）、人行横道线（斑马线）、人行横道预告标示（菱形块）&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;警告标线&lt;/td&gt;
+      &lt;td&gt;用于促使车辆驾驶人及行人了解道路特殊情况，提升警觉，准备防范或采取应变措施的标线&lt;/td&gt;
+      &lt;td&gt;路面宽度渐变段标线（斜双黄实线）、接近障碍物标线（黄色填充渐宽）、收费岛地面标线（白色填充渐宽）、减速标线（车行道横线减速标线（车辆震动感）、车行道纵向减速标线（车道变窄的视觉冲击））、立面标记（黄黑相间斜杠）、有人看守铁路道口（路面上只有一条白色停车线）、无人看守铁路道口（地面有铁路字样）&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;禁止标线&lt;/td&gt;
+      &lt;td&gt;用以告示道路交通的遵行、禁止、限制等特殊规定&lt;/td&gt;
+      &lt;td&gt;双黄实线禁止跨越对向车行道分界线、黄色斜线填充双黄实线禁止跨越对向车行道分界线、黄色单实线禁止跨越对向车行道分界线、黄色虚实线禁止跨越对向车行道分界线、禁止跨越同向车行道分界线、禁止长时停车线（路肩黄虚线）、禁止停车线（路肩黄实线）、停车线（横向白色单实线）、停车让行线（横向白色双实线）、减速让行线（白色双虚线和一个白色倒三角）、导流线（路上可以代替花坛出现的白色V形线填充的弧三角区域）、网状线（黄色线交叉网状的区域）、中心圈（路口中心的白色平行线填充的圆形或菱形）、车种专用车道线、禁止掉头标记（黄色叉和调头标记）&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;strong&gt;标写速度&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;黄色数字 	最高速度 （地面数字）&lt;/li&gt;
+  &lt;li&gt;黑色数字 	建议速度 （立式标牌黄底黑边）&lt;/li&gt;
+  &lt;li&gt;白色数字 	最低速度 （地面数字）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;驾驶证记六分的&lt;/strong&gt;&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;简述&lt;/th&gt;
+      &lt;th&gt;原条例&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;驾驶证暂扣&lt;/td&gt;
+      &lt;td&gt;驾驶证暂扣期间行车的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;交通信号灯&lt;/td&gt;
+      &lt;td&gt;违反交通信号灯的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;超载（普通20%上，营运20%下）&lt;/td&gt;
+      &lt;td&gt;营运汽车超载未达20%的，其他车辆超载20%以上的，货车超载30%或违规载人的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;超速（普通20-50%，营运20%下或其他路跑）&lt;/td&gt;
+      &lt;td&gt;驾驶中型以上载货汽车、校车在高速公路、城市快速路超过规定时速未达20%的；驾驶中型以上载客汽车、校车在高速公路、城市快速路以外的道路上行驶；驾驶其他汽车超速20%以上未达50%的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;高速公路普通停车&lt;/td&gt;
+      &lt;td&gt;营运客车以外的机车在高速公路车道内停车的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;应急车道&lt;/td&gt;
+      &lt;td&gt;违法占用应急车道的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;恶劣天气&lt;/td&gt;
+      &lt;td&gt;低能见度气象条件下，高速路上不按规定行驶的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;补领驾驶证&lt;/td&gt;
+      &lt;td&gt;欺瞒、欺骗手段补领机动车驾驶证的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;普通疲劳驾驶&lt;/td&gt;
+      &lt;td&gt;普通车辆连续驾驶超过4小时或休息不超过20分钟的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;运载危险品无标志（无安全措施）&lt;/td&gt;
+      &lt;td&gt;驾驶机动车运载超限的不可解体未按指定的时间、速度、路线行驶或未悬挂指示标志的；运载爆炸物品、易燃易爆物品、放射性物品、剧毒物品等未按指定的时间、速度、路线行驶的或未悬挂指示标志并采取必要安全措施的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;不避校车&lt;/td&gt;
+      &lt;td&gt;驾驶机动车不按照规定避让校车的&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;strong&gt;驾驶证记12分的&lt;/strong&gt;&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;简述&lt;/th&gt;
+      &lt;th&gt;原条例&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;准驾车型&lt;/td&gt;
+      &lt;td&gt;驾驶与准驾车型不符的车辆的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;酒驾&lt;/td&gt;
+      &lt;td&gt;酒驾的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;超载（营运20+%）&lt;/td&gt;
+      &lt;td&gt;驾驶营运客车、校车超载20%以上。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;事故后逃逸&lt;/td&gt;
+      &lt;td&gt;交通事故后逃逸，尚不构成犯罪的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;搞牌证的&lt;/td&gt;
+      &lt;td&gt;未悬挂号牌的，故意污损、遮挡号牌的，不按规定安装号牌的。伪造号牌、驾驶证、行驶证、校车标牌，使用其他车辆的号牌的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;高速公路搞事情&lt;/td&gt;
+      &lt;td&gt;高速公路上逆行、倒车、掉头的，穿越中央分隔带掉头的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;高速公路营运停车&lt;/td&gt;
+      &lt;td&gt;营运客车在高速公路车道内停车的。&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;超速的（普通50+%，营运20+%或其他路50+%）&lt;/td&gt;
+      &lt;td&gt;驾驶中型以上载客载货汽车在高速公路、城市快速路上超速20%的，或在其他路上超速50%的。驾驶其他机动车超速50%的&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;营运、危险疲劳驾驶&lt;/td&gt;
+      &lt;td&gt;中型以上载客汽车、危险物品运输车连续4小时未休息的，或休息时间小于20分钟的&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;驾驶校车&lt;/td&gt;
+      &lt;td&gt;未取得校车驾驶资格驾驶校车的。&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;strong&gt;扣留驾驶证的&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;酒驾醉驾的&lt;/li&gt;
+  &lt;li&gt;驾驶员将驾驶权移交无证人员的&lt;/li&gt;
+  &lt;li&gt;超速50+%的&lt;/li&gt;
+  &lt;li&gt;驾驶拼装、报废车的&lt;/li&gt;
+  &lt;li&gt;重大事故构成犯罪的&lt;/li&gt;
+  &lt;li&gt;记分12分的&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;驾驶机动车前的步骤&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;调整驾驶座椅，保证踩踏踏板舒适&lt;/li&gt;
+  &lt;li&gt;调整安全带的松紧与高低&lt;/li&gt;
+  &lt;li&gt;调整方向盘的位置&lt;/li&gt;
+  &lt;li&gt;安全头枕要对准后脑勺来保护颈椎&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;在高速公路需停车排除故障时&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;开启危险警告闪光灯&lt;/li&gt;
+  &lt;li&gt;将车辆移至不影响交通的位置&lt;/li&gt;
+  &lt;li&gt;放置警告标识，将人员转移到安全位置，迅速报警&lt;/li&gt;
+  &lt;li&gt;等待救援&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;行人参与交通的特点&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;主要 	行走随意性大，方向多变&lt;/li&gt;
+  &lt;li&gt;其次 	喜欢聚集，围观&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;零落知识点&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;货车货物未做好防护措施，掉落货物的，货车全责&lt;/li&gt;
+  &lt;li&gt;对于不合格车辆，一律扣留车辆，没有仅扣留行驶证的说法&lt;/li&gt;
+  &lt;li&gt;铁路道口禁止掉头是因为容易发生事故&lt;/li&gt;
+  &lt;li&gt;左侧超车是因为便于观察，有利于安全&lt;/li&gt;
+  &lt;li&gt;车道图形只有公交车车道，没有大型客车车道，快速公交车道是“BRT”（bus rapid transit）标识或“快速公交”标识&lt;/li&gt;
+  &lt;li&gt;交警手势中，变道手势下降较少，会横向偏移；减速手势是垂直下压&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">总结截止于2019年8月2日，之后的知识点或可能不再进行更新。 总结中不涉及图标题目，仅对于一些易混淆、需要系统记忆的知识点进行总结。 本知识点总结或有纰漏或错误，欢迎添加修改后作为自己的笔记或向他人传播，也可作为一个不权威的参考，在二次传播时（如果有的话）如果能署名，是大大的感谢的！ 本总结由leafee 博客总结，参照安卓应用《驾考宝典》中部分网友总结、官方答案解释等资料而成。 使用本总结所造成的的一切后果，作者不负任何责任。 由于本博客仍在建设中,文章标签和目录可能会有所改动,导致超链接无法导向需要的文章,请尽可能复制一份备用 驾驶证禁止申领期限 作弊一年 吊销两年 撤销三年 酒驾五年 肇事逃逸、酒驾重大事故终身 交通肇事罪 交通事故后逃逸的 驾驶安全机件失灵车辆的 无驾驶资格的 拘役/有期徒刑年限 重大事故 3年以下 事故逃逸 3-7年 逃逸致死 7年以上 酒驾 酒驾类型 处罚 酒驾普通车 初次，暂扣6个月驾驶证，1k-2k罚款；再次，10日以下拘留，1k-2k罚款，吊销驾驶证 醉驾普通车 公安约束至酒醒，吊销驾驶证5年禁证，追究刑事责任 酒驾营运车 15日拘留，5k罚款，吊销驾驶证5年禁证 醉驾营运车 公安约束至酒醒，吊销驾驶证10年禁证，且终身不得驾驶营运车辆，追究刑事责任 酒醉驾重大事故 终生不得申领驾驶证 驾驶证更换 有效期满前90日内提交更换申请 信息改动后30日内提交修改申请 审验期限 审验时，延期不得超过3年 重大事故后未被吊销驾驶证的，记分周期结束后30日内接受审验 申请换证时，需要到公安交管部门接受审验 实习期 初次申领驾驶证的12个月为实习期 实习期内需在车后粘贴统一的实习标志 实习期内上高速需3年以上驾龄人陪同 实习期内记满12分，注销其实习的准驾车型的驾驶资格 普通道路车速 无道路中心线 城市道路 30 km/h 公路 40 km/h 有道路中心线 城市道路 50 km/h 公路 70 km/h 高速公路车速 正常 车速（km/h） 双车道 100-120，60-100 三车道 110-120，90-110，60-90 车距 车速高于100 km/h，100 m车距 车速低于100 km/h，可适当缩短，但大于50 m 低能见度（雾灯、近光灯、示廓灯，前后位灯） 能见度200 m，100 m车距，60 km/h 能见度100 m，50 m车距，40 km/h （危险警报闪光灯） 能见度50 m，20 km/h，驶离高速 （危险警报闪光灯） 车辆故障警告标志摆放 普通道路 50-100 m 高速公路 150 m以外 停车远离特殊地点 距特殊路段50 m以外 （交叉路口、铁路道口、急弯路、窄路（宽度不足4米）、桥梁、陡坡、隧道） 公共服务设施30 m以外（公共汽车站、急救站、加油站、消防栓、消防队门前） 罚款 200-2000 拼装、报废车辆 超速50%以上 200 应撤离的交通事故未撤离，且造成拥堵的 1000-2000 酒驾普通车 其他车速不高于30 km/h的情况 进出非机动车道，过铁路口、窄路、急弯路 转弯、掉头、下陡坡 恶劣天气，能见度小于50 m（普通公路） 冰雪、泥泞道路 牵引车辆 标志类型 标志 图形特点 意义 警告标志 黄底黑边黑图标，三角 警告车辆行人注意危险地点 禁令标志 白底红边一斜线，圆形 禁止或限制行为 指示标志 蓝底白边白图标，圆形长方形或正方形 指示车辆、行人行进 指路标志 指路标志 提供方向信息 标线类型 标线 意义 举例 指示标线 用于指示车行道、行车方向、路面边缘、人行道等设施 可跨越对向车行道分界线（黄色虚线），可跨月同向车行道分界线（白色虚线）、车行道边缘线（边缘白色实线【划分机动车道与非机动车道】、边缘白色虚线【用于车辆越线出入道路】、边缘白色虚实线【用以规范车辆行驶轨迹，如公交车站】、边缘黄色单实线【单行路中在左侧划分对向的非机动车道】）、人行横道线（斑马线）、人行横道预告标示（菱形块） 警告标线 用于促使车辆驾驶人及行人了解道路特殊情况，提升警觉，准备防范或采取应变措施的标线 路面宽度渐变段标线（斜双黄实线）、接近障碍物标线（黄色填充渐宽）、收费岛地面标线（白色填充渐宽）、减速标线（车行道横线减速标线（车辆震动感）、车行道纵向减速标线（车道变窄的视觉冲击））、立面标记（黄黑相间斜杠）、有人看守铁路道口（路面上只有一条白色停车线）、无人看守铁路道口（地面有铁路字样） 禁止标线 用以告示道路交通的遵行、禁止、限制等特殊规定 双黄实线禁止跨越对向车行道分界线、黄色斜线填充双黄实线禁止跨越对向车行道分界线、黄色单实线禁止跨越对向车行道分界线、黄色虚实线禁止跨越对向车行道分界线、禁止跨越同向车行道分界线、禁止长时停车线（路肩黄虚线）、禁止停车线（路肩黄实线）、停车线（横向白色单实线）、停车让行线（横向白色双实线）、减速让行线（白色双虚线和一个白色倒三角）、导流线（路上可以代替花坛出现的白色V形线填充的弧三角区域）、网状线（黄色线交叉网状的区域）、中心圈（路口中心的白色平行线填充的圆形或菱形）、车种专用车道线、禁止掉头标记（黄色叉和调头标记） 标写速度 黄色数字 最高速度 （地面数字） 黑色数字 建议速度 （立式标牌黄底黑边） 白色数字 最低速度 （地面数字） 驾驶证记六分的 简述 原条例 驾驶证暂扣 驾驶证暂扣期间行车的。 交通信号灯 违反交通信号灯的。 超载（普通20%上，营运20%下） 营运汽车超载未达20%的，其他车辆超载20%以上的，货车超载30%或违规载人的。 超速（普通20-50%，营运20%下或其他路跑） 驾驶中型以上载货汽车、校车在高速公路、城市快速路超过规定时速未达20%的；驾驶中型以上载客汽车、校车在高速公路、城市快速路以外的道路上行驶；驾驶其他汽车超速20%以上未达50%的。 高速公路普通停车 营运客车以外的机车在高速公路车道内停车的。 应急车道 违法占用应急车道的。 恶劣天气 低能见度气象条件下，高速路上不按规定行驶的。 补领驾驶证 欺瞒、欺骗手段补领机动车驾驶证的。 普通疲劳驾驶 普通车辆连续驾驶超过4小时或休息不超过20分钟的。 运载危险品无标志（无安全措施） 驾驶机动车运载超限的不可解体未按指定的时间、速度、路线行驶或未悬挂指示标志的；运载爆炸物品、易燃易爆物品、放射性物品、剧毒物品等未按指定的时间、速度、路线行驶的或未悬挂指示标志并采取必要安全措施的。 不避校车 驾驶机动车不按照规定避让校车的 驾驶证记12分的 简述 原条例 准驾车型 驾驶与准驾车型不符的车辆的。 酒驾 酒驾的。 超载（营运20+%） 驾驶营运客车、校车超载20%以上。 事故后逃逸 交通事故后逃逸，尚不构成犯罪的。 搞牌证的 未悬挂号牌的，故意污损、遮挡号牌的，不按规定安装号牌的。伪造号牌、驾驶证、行驶证、校车标牌，使用其他车辆的号牌的。 高速公路搞事情 高速公路上逆行、倒车、掉头的，穿越中央分隔带掉头的。 高速公路营运停车 营运客车在高速公路车道内停车的。 超速的（普通50+%，营运20+%或其他路50+%） 驾驶中型以上载客载货汽车在高速公路、城市快速路上超速20%的，或在其他路上超速50%的。驾驶其他机动车超速50%的 营运、危险疲劳驾驶 中型以上载客汽车、危险物品运输车连续4小时未休息的，或休息时间小于20分钟的 驾驶校车 未取得校车驾驶资格驾驶校车的。 扣留驾驶证的 酒驾醉驾的 驾驶员将驾驶权移交无证人员的 超速50+%的 驾驶拼装、报废车的 重大事故构成犯罪的 记分12分的 驾驶机动车前的步骤 调整驾驶座椅，保证踩踏踏板舒适 调整安全带的松紧与高低 调整方向盘的位置 安全头枕要对准后脑勺来保护颈椎 在高速公路需停车排除故障时 开启危险警告闪光灯 将车辆移至不影响交通的位置 放置警告标识，将人员转移到安全位置，迅速报警 等待救援 行人参与交通的特点 主要 行走随意性大，方向多变 其次 喜欢聚集，围观 零落知识点 货车货物未做好防护措施，掉落货物的，货车全责 对于不合格车辆，一律扣留车辆，没有仅扣留行驶证的说法 铁路道口禁止掉头是因为容易发生事故 左侧超车是因为便于观察，有利于安全 车道图形只有公交车车道，没有大型客车车道，快速公交车道是“BRT”（bus rapid transit）标识或“快速公交”标识 交警手势中，变道手势下降较少，会横向偏移；减速手势是垂直下压</summary></entry><entry><title type="html">C++迭代器易bug点</title><link href="/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html" rel="alternate" type="text/html" title="C++迭代器易bug点" /><published>2019-07-30T15:48:48+08:00</published><updated>2019-07-30T15:48:48+08:00</updated><id>/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9</id><content type="html" xml:base="/c++/2019/07/30/%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%98%93bug%E7%82%B9.html">&lt;p&gt;&lt;strong&gt;在对容器进行迭代时，尽可能避免对容器内容的修改，如确实需要修改，则一定要注意容器被修改后当前迭代器的位置是否仍然可用。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;错误代码例&quot;&gt;错误代码例&lt;/h2&gt;
+
+&lt;p&gt;以下代码为&lt;a href=&quot;http://codeforces.com/gym/247981/problem/D&quot;&gt;一次训练赛D题&lt;/a&gt;的尝试作答，原题面为&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;输入每个人的电话号码，将其整理后输出，人名顺序可以为字母序，每个人的电话号码也可以为字母序。&lt;/p&gt;
+
+  &lt;p&gt;规定一个人如果有多个相同号码，则视之为一个号码；如果有多个不同长度的号码，且较长的号码意较短的号码为后缀，则视较短的号码为冗余号码；有多个人共享同一个号码的情况&lt;/p&gt;
+
+  &lt;blockquote&gt;
+    &lt;p&gt;第一行输入一个数字代表接下来要输入的行数，
+每行起始一个字符串代表一个人的姓名，接下来一个数字n表示后边的数字的个数，接下来n个数字代表属于这个人的电话号码们&lt;/p&gt;
+
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;INPUT:
+4
+ivan 3 123 123 456
+ivan 2 456 456
+ivan 8 789 3 23 6 56 9 89 2
+dasha 2 23 789
+
+OUTPUT:
+2
+dasha 2 23 789 
+ivan 4 789 123 2 456 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;INPUT:
+3
+karl 2 612 12
+petr 1 12
+katya 1 612
+
+OUTPUT:
+3
+katya 1 612 
+petr 1 12 
+karl 1 612 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/blockquote&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;解题思路为使用一个&lt;code class=&quot;highlighter-rouge&quot;&gt;map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt;&lt;/code&gt;容器，&lt;code class=&quot;highlighter-rouge&quot;&gt;map&lt;/code&gt;以人名为键，以所有的电话号码为值，而在&lt;code class=&quot;highlighter-rouge&quot;&gt;set&lt;/code&gt;中，电话号码倒序存储。&lt;/p&gt;
+
+&lt;p&gt;在遍历一个人的所有电话号码时，只需要比较相邻的两个号码，前一个是否是后一个的前缀即可，若是，则移除前一个，若否，则遍历下一个，直到倒数第二个。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;map&amp;gt;
+#include &amp;lt;string&amp;gt;
+#include &amp;lt;set&amp;gt;
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;namespace&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;records&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;cin&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;--&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;cin&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;--&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;cin&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;temp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rbegin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rend&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;records&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emplace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;temp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iterator&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;records&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;records&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iterator&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iterator&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;		&lt;span class=&quot;c1&quot;&gt;// the iterator right adjacent to iu&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pointToStr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;copyStr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointToStr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tmpStr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;copyStr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;substr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iv&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tmpStr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;erase&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reverseSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;reverseSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;swap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iterator&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iw&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reverseSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iw&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reverseSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;numbers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emplace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iw&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rbegin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iw&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rend&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()));&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;auto&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;records&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;records&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;sc&quot;&gt;' '&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iterator&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iu&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;sc&quot;&gt;' '&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;cout&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;endl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;以上代码在自己调配的&lt;code class=&quot;highlighter-rouge&quot;&gt;VS Code&lt;/code&gt; + &lt;code class=&quot;highlighter-rouge&quot;&gt;g++&lt;/code&gt;（on Windows）环境下会在第二个循环中&lt;code class=&quot;highlighter-rouge&quot;&gt;string tmpStr = copyStr.substr(0, iu-&amp;gt;size());&lt;/code&gt;的位置崩溃，且没有任何提示。&lt;/p&gt;
+
+&lt;p&gt;在Visual Studio中，会以弹窗的形式报&lt;code class=&quot;highlighter-rouge&quot;&gt;cannot dereference end map/set/ iterator&lt;/code&gt;错误，报错位置是第二个循环的&lt;code class=&quot;highlighter-rouge&quot;&gt;for (set&amp;lt;string&amp;gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) {&lt;/code&gt;，报错条件是判断语句中的&lt;code class=&quot;highlighter-rouge&quot;&gt;numbers.erase(*iu);&lt;/code&gt; 执行后。&lt;/p&gt;
+
+&lt;p&gt;综上，错误原因是&lt;strong&gt;当&lt;code class=&quot;highlighter-rouge&quot;&gt;*iu&lt;/code&gt;的内容被移除后，迭代器&lt;code class=&quot;highlighter-rouge&quot;&gt;iu&lt;/code&gt;所指向的位置就已经失效了，再次进行自增操作则会由于操作已经销毁的内存而程序崩溃。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;修改后的代码如下，但是&lt;strong&gt;并没有AC&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C++&quot;&gt;#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;map&amp;gt;
+#include &amp;lt;string&amp;gt;
+#include &amp;lt;set&amp;gt;
+using namespace std;
+
+int main() {
+	map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt; records;
+	int n;
+	cin &amp;gt;&amp;gt; n;
+	while (n-- &amp;gt; 0) {
+		string name, number;
+		int amount;
+		cin &amp;gt;&amp;gt; name &amp;gt;&amp;gt; amount;
+		while (amount-- &amp;gt; 0) {
+			cin &amp;gt;&amp;gt; number;
+			string temp(number.rbegin(), number.rend());
+			records[name].emplace(temp);
+		}
+	}
+
+	for (map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt;::iterator it = records.begin(); it != records.end(); ++it) {
+		set&amp;lt;string&amp;gt;&amp;amp; numbers = it-&amp;gt;second;
+		for (set&amp;lt;string&amp;gt;::iterator iu = numbers.begin(); iu != numbers.end(); ) {
+			set&amp;lt;string&amp;gt;::iterator iv = iu;		// the iterator right adjacent to iu
+			++iv;
+			if (iv != numbers.end()) {
+				const string&amp;amp; pointToStr = *iv;
+				string copyStr = string(pointToStr);
+				string tmpStr = copyStr.substr(0, iu-&amp;gt;size());
+				if (iv-&amp;gt;size() &amp;gt;= iu-&amp;gt;size() &amp;amp;&amp;amp; *iu == tmpStr)
+					numbers.erase(tmpStr);
+				iu = iv;			// ++iu
+			} else {
+				break;
+			}
+		}
+		set&amp;lt;string&amp;gt; reverseSet;
+		reverseSet.swap(numbers);
+		for (set&amp;lt;string&amp;gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw)
+			numbers.emplace(string(iw-&amp;gt;rbegin(), iw-&amp;gt;rend()));
+	}
+
+	for (auto it = records.begin(); it != records.end(); ++it) {
+		cout &amp;lt;&amp;lt; it-&amp;gt;first &amp;lt;&amp;lt; ' ' &amp;lt;&amp;lt; it-&amp;gt;second.size() &amp;lt;&amp;lt; ' ';
+		for (set&amp;lt;string&amp;gt;::iterator iu = it-&amp;gt;second.begin(); iu != it-&amp;gt;second.end(); ++iu)
+			cout &amp;lt;&amp;lt; *iu &amp;lt;&amp;lt; ' ';
+		cout &amp;lt;&amp;lt; endl;
+	}
+
+	return 0;
+}
+&lt;/code&gt;&lt;/pre&gt;</content><author><name></name></author><category term="c++" /><summary type="html">在对容器进行迭代时，尽可能避免对容器内容的修改，如确实需要修改，则一定要注意容器被修改后当前迭代器的位置是否仍然可用。 错误代码例 以下代码为一次训练赛D题的尝试作答，原题面为 输入每个人的电话号码，将其整理后输出，人名顺序可以为字母序，每个人的电话号码也可以为字母序。 规定一个人如果有多个相同号码，则视之为一个号码；如果有多个不同长度的号码，且较长的号码意较短的号码为后缀，则视较短的号码为冗余号码；有多个人共享同一个号码的情况 第一行输入一个数字代表接下来要输入的行数， 每行起始一个字符串代表一个人的姓名，接下来一个数字n表示后边的数字的个数，接下来n个数字代表属于这个人的电话号码们 INPUT: 4 ivan 3 123 123 456 ivan 2 456 456 ivan 8 789 3 23 6 56 9 89 2 dasha 2 23 789 OUTPUT: 2 dasha 2 23 789 ivan 4 789 123 2 456 INPUT: 3 karl 2 612 12 petr 1 12 katya 1 612 OUTPUT: 3 katya 1 612 petr 1 12 karl 1 612 解题思路为使用一个map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt;容器，map以人名为键，以所有的电话号码为值，而在set中，电话号码倒序存储。 在遍历一个人的所有电话号码时，只需要比较相邻的两个号码，前一个是否是后一个的前缀即可，若是，则移除前一个，若否，则遍历下一个，直到倒数第二个。 #include &amp;lt;iostream&amp;gt; #include &amp;lt;map&amp;gt; #include &amp;lt;string&amp;gt; #include &amp;lt;set&amp;gt; using namespace std; int main() { map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt; records; int n; cin &amp;gt;&amp;gt; n; while (n-- &amp;gt; 0) { string name, number; int amount; cin &amp;gt;&amp;gt; name &amp;gt;&amp;gt; amount; while (amount-- &amp;gt; 0) { cin &amp;gt;&amp;gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt;::iterator it = records.begin(); it != records.end(); ++it) { set&amp;lt;string&amp;gt; &amp;amp; numbers = it-&amp;gt;second; for (set&amp;lt;string&amp;gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) { set&amp;lt;string&amp;gt;::iterator iv = iu; // the iterator right adjacent to iu if (iv != numbers.end()) { ++iv; const string &amp;amp; pointToStr= *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&amp;gt;size()); if (iv-&amp;gt;size() &amp;gt;= iu-&amp;gt;size() &amp;amp;&amp;amp; (*iu == tmpStr)) numbers.erase(*iu); } } set&amp;lt;string&amp;gt; reverseSet; reverseSet.swap(numbers); for (set&amp;lt;string&amp;gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&amp;gt;rbegin(), iw-&amp;gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &amp;lt;&amp;lt; it-&amp;gt;first &amp;lt;&amp;lt; ' ' &amp;lt;&amp;lt; it-&amp;gt;second.size(); for (set&amp;lt;string&amp;gt;::iterator iu = it-&amp;gt;second.begin(); iu != it-&amp;gt;second.end(); ++iu) cout &amp;lt;&amp;lt; *iu &amp;lt;&amp;lt; ' '; cout &amp;lt;&amp;lt; endl; } return 0; } 以上代码在自己调配的VS Code + g++（on Windows）环境下会在第二个循环中string tmpStr = copyStr.substr(0, iu-&amp;gt;size());的位置崩溃，且没有任何提示。 在Visual Studio中，会以弹窗的形式报cannot dereference end map/set/ iterator错误，报错位置是第二个循环的for (set&amp;lt;string&amp;gt;::iterator iu = numbers.begin(); iu != numbers.end(); ++iu) {，报错条件是判断语句中的numbers.erase(*iu); 执行后。 综上，错误原因是当*iu的内容被移除后，迭代器iu所指向的位置就已经失效了，再次进行自增操作则会由于操作已经销毁的内存而程序崩溃。 修改后的代码如下，但是并没有AC #include &amp;lt;iostream&amp;gt; #include &amp;lt;map&amp;gt; #include &amp;lt;string&amp;gt; #include &amp;lt;set&amp;gt; using namespace std; int main() { map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt; records; int n; cin &amp;gt;&amp;gt; n; while (n-- &amp;gt; 0) { string name, number; int amount; cin &amp;gt;&amp;gt; name &amp;gt;&amp;gt; amount; while (amount-- &amp;gt; 0) { cin &amp;gt;&amp;gt; number; string temp(number.rbegin(), number.rend()); records[name].emplace(temp); } } for (map&amp;lt;string, set&amp;lt;string&amp;gt;&amp;gt;::iterator it = records.begin(); it != records.end(); ++it) { set&amp;lt;string&amp;gt;&amp;amp; numbers = it-&amp;gt;second; for (set&amp;lt;string&amp;gt;::iterator iu = numbers.begin(); iu != numbers.end(); ) { set&amp;lt;string&amp;gt;::iterator iv = iu; // the iterator right adjacent to iu ++iv; if (iv != numbers.end()) { const string&amp;amp; pointToStr = *iv; string copyStr = string(pointToStr); string tmpStr = copyStr.substr(0, iu-&amp;gt;size()); if (iv-&amp;gt;size() &amp;gt;= iu-&amp;gt;size() &amp;amp;&amp;amp; *iu == tmpStr) numbers.erase(tmpStr); iu = iv; // ++iu } else { break; } } set&amp;lt;string&amp;gt; reverseSet; reverseSet.swap(numbers); for (set&amp;lt;string&amp;gt;::iterator iw = reverseSet.begin(); iw != reverseSet.end(); ++iw) numbers.emplace(string(iw-&amp;gt;rbegin(), iw-&amp;gt;rend())); } for (auto it = records.begin(); it != records.end(); ++it) { cout &amp;lt;&amp;lt; it-&amp;gt;first &amp;lt;&amp;lt; ' ' &amp;lt;&amp;lt; it-&amp;gt;second.size() &amp;lt;&amp;lt; ' '; for (set&amp;lt;string&amp;gt;::iterator iu = it-&amp;gt;second.begin(); iu != it-&amp;gt;second.end(); ++iu) cout &amp;lt;&amp;lt; *iu &amp;lt;&amp;lt; ' '; cout &amp;lt;&amp;lt; endl; } return 0; }</summary></entry><entry><title type="html">shell符号总结【上】</title><link href="/linux/2019/07/20/shell%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0.html" rel="alternate" type="text/html" title="shell符号总结【上】" /><published>2019-07-20T15:46:09+08:00</published><updated>2019-07-20T15:46:09+08:00</updated><id>/linux/2019/07/20/shell%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0</id><content type="html" xml:base="/linux/2019/07/20/shell%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0.html">&lt;h3 id=&quot;关于符号&quot;&gt;关于符号&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;$&lt;/code&gt; 美元符号, 一般用于取变量的值, 不过总觉得和命令代换有很多相似之处, 具体可见样例, 另外美元符号也会和其他符号产生有意思的组合.&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;nv&quot;&gt;$ var&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;echo hello&quot;&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;$ $var&lt;/span&gt;
+  hello
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;[]&lt;/code&gt; 相当于test命令, 用于测试条件是否成立, 若成立则退出值为0(真), 由于if, for, case等结构语句通过上一条命令的退出值来决定运行流程, 因此方括号多用于这些结构语句中.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;$()&lt;/code&gt; , &lt;code class=&quot;highlighter-rouge&quot;&gt;` `&lt;/code&gt; 两种用法相同, 均是命令代换, 即取所包含的命令的输出作为文本值参与运行, 文本值甚至可以是命令, 如直接运行&lt;code class=&quot;highlighter-rouge&quot;&gt;`echo pwd`&lt;/code&gt;则相当于直接运行&lt;code class=&quot;highlighter-rouge&quot;&gt;pwd&lt;/code&gt;.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;$[]&lt;/code&gt; 对于此命令需要提前了解双反引号(上一条), 以及&lt;code class=&quot;highlighter-rouge&quot;&gt;expr&lt;/code&gt;命令, &lt;code class=&quot;highlighter-rouge&quot;&gt;expr&lt;/code&gt;官方描述为&lt;em&gt;Print the value of EXPRESSION to standard output&lt;/em&gt;, 所以可以把&lt;code class=&quot;highlighter-rouge&quot;&gt;expr&lt;/code&gt;命令做命令代换, 于是&lt;code class=&quot;highlighter-rouge&quot;&gt;$[]&lt;/code&gt;与&lt;code class=&quot;highlighter-rouge&quot;&gt; `expr expression`&lt;/code&gt;效果相同, 样例如下.&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;nv&quot;&gt;$ var1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expr &lt;/span&gt;1 + 1&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;$ var2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$[&lt;/span&gt;1 + 1]
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;var1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$var1&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;var2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$var2&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;var1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2 &lt;span class=&quot;nv&quot;&gt;var2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;不过有一点奇怪的是, 以下命令的运行结果并不能如我所愿输出&lt;code class=&quot;highlighter-rouge&quot;&gt;hello&lt;/code&gt;, 不过至少反引号和美元符号加方括号的行为是一样的, 仍然支持我的猜想.&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;alias &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;echo hello&quot;&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;alias
+  alias &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'echo hello'&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expr &lt;/span&gt;1 + 1&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+  bash: 2: &lt;span class=&quot;nb&quot;&gt;command &lt;/span&gt;not found
+  &lt;span class=&quot;nv&quot;&gt;$ $[&lt;/span&gt;1 + 1]
+  bash: 2: &lt;span class=&quot;nb&quot;&gt;command &lt;/span&gt;not found
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;;&lt;/code&gt; 可用于分隔命令, 书本上翻译为命令列表, 一般来说, 命令与命令之间通过换行符来进行分隔, 但是有时为了追求代码的紧凑会希望将几条命令放在同一行, 于是这便是分号的用途.&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; expression &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+      &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;command
+  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;()&lt;/code&gt; 用于表示数组, 数组样例见下一个符号的样例, 也用于进程列表, 进程列表中的命令会被开一个子shell运行, 进程列表样例如下.&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$BASH_SUBSHELL&lt;/span&gt;           &lt;span class=&quot;c&quot;&gt;# 当前子shell水平为0&lt;/span&gt;
+  0
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$BASH_SUBSHELL&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;	        &lt;span class=&quot;c&quot;&gt;# 当前子shell水平为0&lt;/span&gt;
+  1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;那么之前的命令代换中的括号是否也会被开一个子shell呢,&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$BASH_SUBSHELL&lt;/span&gt;           &lt;span class=&quot;c&quot;&gt;# 当前子shell水平为0&lt;/span&gt;
+  0
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$BASH_SUBSHELL&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;   &lt;span class=&quot;c&quot;&gt;# 命令代换中子shell水平为1&lt;/span&gt;
+  1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;猜想得证.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;${}&lt;/code&gt; 此符号用于取数组的值, 需要注意的一点是, 当数组中某一个位置的值被&lt;code class=&quot;highlighter-rouge&quot;&gt;unset&lt;/code&gt;之后, 该位置后面的值并不会自动向前移动一个序号, 可见样例.&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;nv&quot;&gt;$ arr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=(&lt;/span&gt; 1 2 3 &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[2]&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+  3
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;unset &lt;/span&gt;arr[1]
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[2]&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+  3
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[1]&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+                                  &lt;span class=&quot;c&quot;&gt;#空行, 无输出&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;[[ ]]&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;(( ))&lt;/code&gt; 双方括号是拓展字符运算, 双圆括号是拓展数学运算, 其中拓展数学运算可支持移位操作,自增操作等高级操作, 拓展字符运算可支持通配符匹配.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;;;&lt;/code&gt; 双分号用于case的匹配中, 与单分号不同的是, 单分号只能结束当前命令, 后续仍被认为是这一块的可执行语句, 不能接下一个匹配条件, 只有以双分号结尾, 才能接下一个匹配&lt;/p&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;cat &lt;/span&gt;caseExample.sh
+&lt;span class=&quot;nv&quot;&gt;var&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2
+&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$var&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in
+&lt;/span&gt;1 &lt;span class=&quot;p&quot;&gt;|&lt;/span&gt; 2 &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;1 &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;2 &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+3 &lt;span class=&quot;p&quot;&gt;|&lt;/span&gt; 4 &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;3 &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;4 &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;esac&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./caseExample.sh
+1
+2
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;关于结构化语句&quot;&gt;关于结构化语句&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt; 判断语句&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;
+        &lt;p&gt;判断的方法只是简单地根据上一命令的返回值来判断执行结构, 关于这一点, 其实最常用的方括号只是&lt;code class=&quot;highlighter-rouge&quot;&gt;test&lt;/code&gt;命令, 这一点在上面符号的部分有提及. 通常用法是&lt;/p&gt;
+
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;k&quot;&gt;if &lt;/span&gt;command1 &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+      &lt;/span&gt;command2
+  &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+
+        &lt;p&gt;以上用法中, &lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;是任意一个可执行的shell命令, &lt;code class=&quot;highlighter-rouge&quot;&gt;command2&lt;/code&gt;是条件为真则执行的语句体, 最后&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt;语句使用&lt;code class=&quot;highlighter-rouge&quot;&gt;fi&lt;/code&gt;进行结尾. 需要注意的是, &lt;strong&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;的返回值若是&lt;code class=&quot;highlighter-rouge&quot;&gt;0&lt;/code&gt;则&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt;判断为真, 非&lt;code class=&quot;highlighter-rouge&quot;&gt;0&lt;/code&gt;则判断为假&lt;/strong&gt;, 这一点与许多类C语言恰恰相反. 另外, &lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;是按照通常的命令执行方式执行的, 所以如果&lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;命令有输出, 则会直接输出在控制台中.&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt;语句也可以在条件为假的时候执行语句, 方法是在结尾&lt;code class=&quot;highlighter-rouge&quot;&gt;fi&lt;/code&gt;之前加入一个&lt;code class=&quot;highlighter-rouge&quot;&gt;else&lt;/code&gt;; 当然&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt;也可以判断多个条件进行筛选, 方法是使用&lt;code class=&quot;highlighter-rouge&quot;&gt;elfi&lt;/code&gt;, 样例如下&lt;/p&gt;
+
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;k&quot;&gt;if &lt;/span&gt;command1 &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+      &lt;/span&gt;command2
+  &lt;span class=&quot;k&quot;&gt;elif &lt;/span&gt;command3 &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+      &lt;/span&gt;command4
+  &lt;span class=&quot;k&quot;&gt;else
+      &lt;/span&gt;command5
+  &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+
+        &lt;p&gt;为了代码紧凑, 有时候会在判断命令之后使用分号进行分隔, 并把&lt;code class=&quot;highlighter-rouge&quot;&gt;then&lt;/code&gt;放在同一行的之后&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;​    &lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt;语句中也可以使用逻辑运算符, 和其他许多类C语言类似, 使用&lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;&amp;amp;&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;||&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;!&lt;/code&gt;, 分别作为与,或,非. 这些逻辑运算符可以用在&lt;code class=&quot;highlighter-rouge&quot;&gt;test&lt;/code&gt;命令和普通命令之中. 需要注意的是, 在&lt;code class=&quot;highlighter-rouge&quot;&gt;test&lt;/code&gt;手册中并没有&lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;&amp;amp;&lt;/code&gt;,&lt;code class=&quot;highlighter-rouge&quot;&gt;||&lt;/code&gt;的表述, 不过这些仍然被支持, 因为在shell中, &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;amp;&amp;amp;&lt;/code&gt;的行为是若该符号之前的命令运行的返回值为&lt;strong&gt;真&lt;/strong&gt;, 则执行下一条命令, &lt;code class=&quot;highlighter-rouge&quot;&gt;||&lt;/code&gt;的行为是若该符号之前的命令运行返回值为&lt;strong&gt;假&lt;/strong&gt;, 则执行下一条命令, 这个被称为”短路”, 在C语言中同样适用. 
+​    所以如此来看的话, 使用&lt;code class=&quot;highlighter-rouge&quot;&gt;command1 &amp;amp;&amp;amp; command2&lt;/code&gt;的作为分析, 如果&lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;返回值为真, 则执行&lt;code class=&quot;highlighter-rouge&quot;&gt;command2&lt;/code&gt;, 此时整个逻辑表达式的值就由&lt;code class=&quot;highlighter-rouge&quot;&gt;command2&lt;/code&gt;的返回值决定, 若&lt;code class=&quot;highlighter-rouge&quot;&gt;command2&lt;/code&gt;的返回值也为真, 则最后&lt;code class=&quot;highlighter-rouge&quot;&gt;$?&lt;/code&gt;的值就是真, 反之则假. 若&lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;返回值为假, 则短路, 最终整个逻辑运算的结果就是&lt;code class=&quot;highlighter-rouge&quot;&gt;command1&lt;/code&gt;的返回值–假. 原因是逻辑运算符的作用仅仅是决定是否进行短路, 而且条件判断依据仅仅是之前运行的最后一条命令的返回值, 于是整个逻辑运算十分顺利. 或运算同理. 
+​    至于非运算, 叹号&lt;code class=&quot;highlighter-rouge&quot;&gt;!&lt;/code&gt;其实也是一条命令, 这一点可以在终端不输入任何字符的情况下敲入双tab, 使其打印所有的可执行命令, 其中第一条就是&lt;code class=&quot;highlighter-rouge&quot;&gt;!&lt;/code&gt;. 样例如下&lt;/p&gt;
+
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'hello'&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'true'&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+hello
+1
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'hello'&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'true'&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+hello
+&lt;span class=&quot;nb&quot;&gt;true
+&lt;/span&gt;0
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'hello'&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'true'&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+&lt;span class=&quot;s1&quot;&gt;'hello'&lt;/span&gt;
+&lt;span class=&quot;s1&quot;&gt;'true'&lt;/span&gt;
+0
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;特殊变量&quot;&gt;特殊变量&lt;/h2&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;变量&lt;/th&gt;
+      &lt;th&gt;含义&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$$&lt;/td&gt;
+      &lt;td&gt;当前shell进程的PID&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$?&lt;/td&gt;
+      &lt;td&gt;上一命令运行的返回值&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$#&lt;/td&gt;
+      &lt;td&gt;命令行脚本传递参数的个数&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$@&lt;/td&gt;
+      &lt;td&gt;作为数组(雾)获取全部命令行参数&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$*&lt;/td&gt;
+      &lt;td&gt;作为一整条字符串获取全部命令行参数&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$0&lt;/td&gt;
+      &lt;td&gt;当前shell脚本的运行名(脚本的绝对路径或者相对路径)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;$n&lt;/td&gt;
+      &lt;td&gt;shell脚本的第n个参数&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;</content><author><name></name></author><category term="linux" /><summary type="html">关于符号</summary></entry></feed>
