@@ -127,9 +127,147 @@
 </nav>
         <div id="content" class="content-container">
         
-    <h1 class="not-found-title">404: Not found</h1>
-    <h2>Sorry, we couldn't find the page you're looking for.</h2>
-    <a href="/">Go back home</a>
+<h1 class="post-title">正则表达式随笔</h1>
+    <time>August 3, 2019</time>
+    <div>
+        <p>
+        <h2 id="posix基础正则表达式">POSIX基础正则表达式</h2>
+<h3 id="纯文本">纯文本</h3>
+<p>以文本形式直接写出需要匹配的内容</p>
+<blockquote>
+<p><code>abc</code> ===&gt; <code>abc</code></p>
+</blockquote>
+<h3 id="特殊字符">特殊字符</h3>
+<p>.*[*^${}+?\|()</p>
+<h3 id="锚字符">锚字符</h3>
+<ul>
+<li>行首 ^</li>
+<li>行尾 $</li>
+</ul>
+<blockquote>
+<p><code>^$</code> ===&gt; 匹配空行</p>
+</blockquote>
+<h3 id="点号字符">点号字符</h3>
+<p>匹配换行字符之外的任意单个字符, 必须匹配一个字符</p>
+<blockquote>
+<p><code>a.c</code> ===&gt; <code>abc</code>, <code>a c</code></p>
+</blockquote>
+<h3 id="字符组">字符组</h3>
+<p>使用方括号定义一个字符组, 方括号中包含素有希望出现在该字符组中的字符</p>
+<blockquote>
+<p><code>a[bcd]b</code> ===&gt; <code>abb</code>, <code>acb</code>, <code>adb</code></p>
+</blockquote>
+<h3 id="排除型字符组">排除型字符组</h3>
+<p>在普通字符组的起始字符写出一个脱字符<code>^</code>, 即可匹配字符组之外的所有字符, 换行符除外</p>
+<blockquote>
+<p><code>a[^bcd]b</code> ===&gt; <code>aab</code></p>
+</blockquote>
+<h3 id="区间">区间</h3>
+<p>在字符组中单破折号可在字符组中用作区间</p>
+<blockquote>
+<p><code>a[b-f]b</code> = <code>a[bcdef]b</code> ===&gt; <code>abb</code>, <code>acb</code>, <code>adb</code>, <code>aeb</code>, <code>afb</code></p>
+</blockquote>
+<h3 id="特殊字符组">特殊字符组</h3>
+<table>
+<thead>
+<tr>
+<th>组</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[[:alpha:]]</td>
+<td>匹配任意字母字符, 不管大写还是小写</td>
+</tr>
+<tr>
+<td>[[:alnum:]]</td>
+<td>匹配任意字母数字字符0-9, a-z, A-Z</td>
+</tr>
+<tr>
+<td>[[:blank:]]</td>
+<td>匹配空格或制表符</td>
+</tr>
+<tr>
+<td>[[:digit:]]</td>
+<td>匹配0-9之间的数字</td>
+</tr>
+<tr>
+<td>[[:lower:]]</td>
+<td>匹配小写字符a-z</td>
+</tr>
+<tr>
+<td>[[:print:]]</td>
+<td>匹配任意可打印字符</td>
+</tr>
+<tr>
+<td>[[:punct:]]</td>
+<td>匹配标点符号</td>
+</tr>
+<tr>
+<td>[[:space:]]</td>
+<td>匹配任意空白字符: 空格, 制表符, NL, FF, VT和CR</td>
+</tr>
+<tr>
+<td>[[:upper:]]</td>
+<td>匹配任意大写字母字符A-Z</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><code>a[[:alnum:]]c</code> ===&gt; <code>abc</code>, <code>a1c</code>, <code>a8c</code></p>
+</blockquote>
+<h3 id="星号">星号</h3>
+<p>在字符后面放置星号表明该字符必须在匹配模式的文本中出现0次或多次</p>
+<blockquote>
+<p><code>a[bc]\*c</code> ===&gt; <code>abc</code>, <code>acc</code>, <code>ac</code>, <code>abcc</code>, <code>abbbbbc</code></p>
+</blockquote>
+<h2 id="posix拓展正则表达式">POSIX拓展正则表达式</h2>
+<h3 id="问号">问号</h3>
+<p>在字符后面放置星号表明该字符必须在匹配模式的文本中出现0次或1次</p>
+<blockquote>
+<p><code>ab?c</code> ===&gt; <code>ac</code>, <code>abc</code></p>
+</blockquote>
+<h3 id="加号">加号</h3>
+<p>在字符后面放置加号表明该字符必须在匹配模式的文本中出现1次或多次</p>
+<blockquote>
+<p><code>ab+c</code> ===&gt; <code>abc</code>, <code>abbc</code>, <code>abbbc</code></p>
+</blockquote>
+<h3 id="花括号">花括号</h3>
+<p>花括号标识允许为可重复的正则表达式指定一个上下限, 通常称为<strong>间隔</strong></p>
+<ul>
+<li><code>m</code> : 正则表达式准确出现m次</li>
+<li><code>m,n</code> : 正则表达式出现至少m次, 至多n次</li>
+</ul>
+<blockquote>
+<p><code>ab{2}c</code> ===&gt; <code>abbc</code></p>
+<p><code>ab{1,2}c</code> ===&gt;<code>abc</code>, <code>abbc</code></p>
+</blockquote>
+<h3 id="竖线">竖线</h3>
+<p>表示在检查数据流时, 使用逻辑或的方式指定两个或多个匹配模式</p>
+<blockquote>
+<p><code>a(b|c)c</code> ===&gt; <code>abc</code>, <code>acc</code></p>
+<p><code>abc|abb</code> ===&gt; <code>abc</code>, <code>abb</code></p>
+</blockquote>
+<h3 id="圆括号">圆括号</h3>
+<p>圆括号用于对正则表达式模式进行分组, 分组时, 该组会被视为一个标准字符, 可以向对普通字符一样给该组用特殊字符来限制匹配</p>
+<blockquote>
+<p><code>Sat(urday)?</code> ===&gt; <code>Sat</code>, <code>Saturday</code></p>
+</blockquote>
+
+        </p>
+    </div>
+    
+
+    <div class="page-footer">
+        <hr class="footer-divider">
+        
+        
+            <a class="tag" href="/tags/regular-expression">#regular-expression</a>
+        
+      
+    </div>
+
 
         
 

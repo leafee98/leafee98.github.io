@@ -127,9 +127,70 @@
 </nav>
         <div id="content" class="content-container">
         
-    <h1 class="not-found-title">404: Not found</h1>
-    <h2>Sorry, we couldn't find the page you're looking for.</h2>
-    <a href="/">Go back home</a>
+<h1 class="post-title">Linux计划任务 -- crontab</h1>
+    <time>September 17, 2019</time>
+    <div>
+        <p>
+        <h2 id="使用语法">使用语法</h2>
+<p>crontab 的每行命令有5个日期时间部分，5个部分之间使用space或tab分隔，后面接着需要执行的命令</p>
+<h4 id="时间日期部分">时间日期部分</h4>
+<p>这一部分语法如下，但是如果不准备深入了解，可以在<a href="crontab.guru">crontab guru</a>来简单地配置需要的时间</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">mm hh DD MM dd <span style="color:#f92672">{</span>command<span style="color:#f92672">}</span>
+<span style="color:#75715e"># mm : minute (0-59)</span>
+<span style="color:#75715e"># hh : hour (0-23)</span>
+<span style="color:#75715e"># DD : day of month (1-31)</span>
+<span style="color:#75715e"># MM : month (1-12)(or use name)</span>
+<span style="color:#75715e"># dd : day of week (0-7)(0 or 7 is sunday)(or use name)</span>
+</code></pre></div><ul>
+<li>每一个日期时间的部分都可以使用范围表示<code>0 0 1 1 1-4</code>即<code>0分 0时 1日 1月 周1至周4</code></li>
+<li>使用星号表示该区域的值可以为任意值<code>0 0 1 * *</code>即<code>0分 0时 1日 任意月 一周内任意天</code></li>
+<li>使用逗号可以并列多个允许时间<code>0 0 * * 1,5</code>表示<code>0分 0时 0 任意日 任意月 周一和周五</code></li>
+<li>使用斜杠可以设定步长<code>* */2 * * *</code>表示<code>每两个小时</code>，<code>1-7/2</code>表示<code>1,3,5,7</code></li>
+<li>月和周可以使用英文名称，但是列表（逗号分隔）和范围（短横线）将会不再可用</li>
+</ul>
+<h4 id="时间的另一种表示">时间的另一种表示</h4>
+<p>除使用5段字符来描述运行的时间外，还可以使用内置的8个字符串来代替这5段字符，这8个字符串中只有<code>@reboot</code>是无法用5段字符描述，并且它指示的时间是守护进程<code>cron</code>启动的时间，所以具体的启动时机与系统的启动顺序有关</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">@reboot -- run once, at startup
+@yearly -- run once a year <span style="color:#e6db74">&#39;0 0 1 1 *&#39;</span>
+@annually -- <span style="color:#f92672">(</span>same as @yearly<span style="color:#f92672">)</span>
+@monthly -- run once a month <span style="color:#e6db74">&#39;0 0 1 * *&#39;</span>
+@weekly -- run once a week <span style="color:#e6db74">&#39;0 0 * * 0&#39;</span>
+@daily -- run once a day <span style="color:#e6db74">&#39;0 0 * * *&#39;</span>
+@midnight -- <span style="color:#f92672">(</span>same as @daily<span style="color:#f92672">)</span>
+@hourly -- run once an hour <span style="color:#e6db74">&#39;0 * * * *&#39;</span>
+</code></pre></div><h4 id="命令部分">命令部分</h4>
+<ul>
+<li>百分号后的字符会以标准输入的方式输入给命令，除非使用反斜杠escape</li>
+<li>结尾使用反斜杠<strong>不可以</strong>将命令另起一行而不打断命令</li>
+</ul>
+<h2 id="注意事项">注意事项</h2>
+<h4 id="环境变量">环境变量</h4>
+<p>设定环境变量只需要使用<code>key = value</code>即可，每一条环境变量的赋值命令都需要另起一行，等号两边的空格是可选的，其中的<code>value</code>可选被引号包括，单双引号均可但必须匹配，设定空值时必须使用引号</p>
+<p>这些环境变量可以在命令部分使用，但是环境变量时，使用美元符号引用之前的变量的用法将失效，如以下的命令将不再以期望的方式运行</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">a <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+b <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+c <span style="color:#f92672">=</span> $a $b
+</code></pre></div><p>crontab的环境变量与普通shell环境有所不同，它采用的shell是<code>/bin/sh</code>, 并且<code>path=/usr/bin:/bin</code>，修改默认shell和mailto的示例如下</p>
+<pre><code>SHELL = /bin/bash
+MAILTO = paul
+</code></pre><h4 id="时区">时区</h4>
+<p>cron的时间与当前时区有关，然而由于时区不能由各用户自定义，所以整个系统的cron只能按照统一的一个时区来工作</p>
+
+        </p>
+    </div>
+    
+
+    <div class="page-footer">
+        <hr class="footer-divider">
+        
+        
+            <a class="tag" href="/tags/linux">#linux</a>
+        
+            <a class="tag" href="/tags/crontab">#crontab</a>
+        
+      
+    </div>
+
 
         
 

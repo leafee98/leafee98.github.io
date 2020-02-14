@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Leafee&#39;s Blog</title>
+    <link>/tags/</link>
+    <description>Recent content in Tags on Leafee&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 06 Feb 2020 19:31:00 +0800</lastBuildDate>
+    
+	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>linux</title>
+      <link>/tags/linux/</link>
+      <pubDate>Thu, 06 Feb 2020 19:31:00 +0800</pubDate>
+      
+      <guid>/tags/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>raspi</title>
+      <link>/tags/raspi/</link>
+      <pubDate>Thu, 06 Feb 2020 19:31:00 +0800</pubDate>
+      
+      <guid>/tags/raspi/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>vsftp</title>
+      <link>/tags/vsftp/</link>
+      <pubDate>Tue, 01 Oct 2019 20:53:00 +0800</pubDate>
+      
+      <guid>/tags/vsftp/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>crontab</title>
+      <link>/tags/crontab/</link>
+      <pubDate>Tue, 17 Sep 2019 11:04:15 +0800</pubDate>
+      
+      <guid>/tags/crontab/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>systemctl</title>
+      <link>/tags/systemctl/</link>
+      <pubDate>Sat, 14 Sep 2019 04:09:45 +0800</pubDate>
+      
+      <guid>/tags/systemctl/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>regular-expression</title>
+      <link>/tags/regular-expression/</link>
+      <pubDate>Sat, 03 Aug 2019 16:03:45 +0800</pubDate>
+      
+      <guid>/tags/regular-expression/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>drive</title>
+      <link>/tags/drive/</link>
+      <pubDate>Fri, 02 Aug 2019 21:40:00 +0800</pubDate>
+      
+      <guid>/tags/drive/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
