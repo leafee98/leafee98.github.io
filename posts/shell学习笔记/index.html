@@ -181,7 +181,7 @@ $ echo <span style="color:#66d9ef">$(</span>echo $BASH_SUBSHELL<span style="colo
 </li>
 <li>
 <p><code>${}</code> 此符号用于取数组的值, 需要注意的一点是, 当数组中某一个位置的值被<code>unset</code>之后, 该位置后面的值并不会自动向前移动一个序号, 可见样例.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ arr<span style="color:#f92672">=</span><span style="color:#f92672">(</span> <span style="color:#ae81ff">1</span> <span style="color:#ae81ff">2</span> <span style="color:#ae81ff">3</span> <span style="color:#f92672">)</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ arr<span style="color:#f92672">=(</span> <span style="color:#ae81ff">1</span> <span style="color:#ae81ff">2</span> <span style="color:#ae81ff">3</span> <span style="color:#f92672">)</span>
 $ echo <span style="color:#e6db74">${</span>arr[2]<span style="color:#e6db74">}</span>
 <span style="color:#ae81ff">3</span>
 $ unset arr<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span>

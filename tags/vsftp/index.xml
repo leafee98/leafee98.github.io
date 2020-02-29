@@ -13,10 +13,10 @@
     
     <item>
       <title>vsftp 配置,踩坑和一些理解</title>
-      <link>/posts/2019-08-15-vsftp%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E8%B8%A9%E5%9D%91/</link>
+      <link>/posts/vsftp%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E8%B8%A9%E5%9D%91/</link>
       <pubDate>Tue, 01 Oct 2019 20:53:00 +0800</pubDate>
       
-      <guid>/posts/2019-08-15-vsftp%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E8%B8%A9%E5%9D%91/</guid>
+      <guid>/posts/vsftp%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E8%B8%A9%E5%9D%91/</guid>
       <description>1. vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为三个方面</description>
     </item>
     
