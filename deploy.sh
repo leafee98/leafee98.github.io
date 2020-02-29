@@ -43,5 +43,6 @@ rmdir /var/tmp/$dest/
 
 echo "#### stash and commit"
 commit_msg="deploy: $(date +'%m/%d/%Y %H:%M')"
-git commit -a -m "$commit_msg"
+git add .
+git commit -m "$commit_msg"
 
