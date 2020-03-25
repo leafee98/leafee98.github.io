@@ -2,7 +2,6 @@
 
 <html lang="en-us">
     <head>
-	<meta name="generator" content="Hugo 0.66.0" />
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,8 +28,6 @@
     
     
  
-    
-    <link rel="alternate" type="application/rss+xml" href="/index.xml" title="Leafee's Blog" />
     
     
 </head>
@@ -130,170 +127,144 @@
 </nav>
         <div id="content" class="content-container">
         
-<div class = "article-content">
-        
-        <div class="description">
-            <p>Blog of Leafee, or called note of Leafee better.</p>
-        </div>
-        
-        
-        
-        
-        <article>
-            <h2>
-                <a href="/posts/nginx%E9%85%8D%E7%BD%AEwebdav/">
-                    Nginx配置webdav
-                </a>
-            </h2>
-            <div><p>本质上, webdav就是从http拓展了几条指令, 从而可以用来管理文件系统或进行文件分享.</p></div>
-            <div class="post-footer">
-            <time>March 24, 2020</time>
+<h1 class="post-title">Nginx配置webdav</h1>
+    <time>March 24, 2020</time>
+    <div>
+        <p>
+        <blockquote>
+<p>本质上, webdav就是从http拓展了几条指令, 从而可以用来管理文件系统或进行文件分享.</p>
+</blockquote>
+<h2 id="目录">目录</h2>
+<ol>
+<li>重新编译nginx</li>
+<li>webdav配置</li>
+<li>认证权限</li>
+<li>SSL权限</li>
+</ol>
+<h2 id="重新编译nginx">重新编译nginx</h2>
+<p>原本nginx配置webdav很简单, 只要在配置文件中加入关于<a href="http://nginx.org/en/docs/http/ngx_http_dav_module.html">这个模块</a>的配置就好了, 可惜官方文档中轻描淡写说了下面一句话, 然后webdav的<code>PROPFIND,OPTIONS,LOCK,UNLOCK</code>几条命令就不被支持了, 于是就需要给nginx加入新的module.</p>
+<blockquote>
+<pre><code> WebDAV clients that require additional WebDAV methods to operate will not work with this module. 
+</code></pre>
+</blockquote>
+<p>其实说是要重新编译nginx, 还是因为nginx高性能的定位, 使其不允许动态加载插件, 所以需要拿到插件源码, 配合nginx源码重新编译来达到增加插件的目的.</p>
+<h3 id="准备">准备</h3>
+<p>先去克隆这个<a href="https://github.com/arut/nginx-dav-ext-module">arut/nginx-dav-ext-module</a>这个仓库, 此仓库就是为nginx提供原module所缺失的wendav请求支持.</p>
+<p>然后去<a href="http://nginx.org/en/download.html">nginx官网</a>下载nginx的源码. 两个源码都放在一个比较方便操作的位置就好, 以下都假设放到了家目录下.</p>
+<h4 id="编译">编译</h4>
+<p>在编译之前, 首先需要了解nginx有一个参数是<code>-V</code>, 这个参数可以打印nginx的一些编译信息, 包括在configure步骤的参数, 如果已经现有一个可用的nginx, 只是希望替换原来的二进制程序, 保证编译后的程序和自身发行版的nginx行为尽可能相同, 则可以把此参数打印的configre参数全部复制一下.</p>
+<p>进入nginx源码目录, 运行目录下的<code>configure</code>, 附上刚刚拿到的参数, 最后再加上一个<code>--add-module</code>的参数, 指向&rsquo;arut/nginx-dav-ext-module'仓库的目录, 如下:</p>
+<pre><code>./configure &lt;parameters copied befored&gt; --add-module=../nginx-dav-ext-module/
+</code></pre><p>如果在配置过程中, 提示缺少某些依赖, 通过自己的包安装器安装即可, 也可以在参数中去掉产生错误的不必要的module.</p>
+<p>此时目录下应该出现<code>Makefile</code>文件, 这时使用<code>make</code>命令即可开始编译</p>
+<pre><code>make
+</code></pre><p>经过取决于机器性能的编译时间以后, <code>objs</code>目录下应该已经有各种编译结果了, 可以直接在源码目录以root身份执行<code>make install</code>安装, 也可以直接将<code>objs</code>目录下的二进制可执行文件覆盖掉原来的<code>nginx</code>可执行文件.</p>
+<h2 id="webdav配置">webdav配置</h2>
+<p>nginx的配置文件中, 每一个配置项都有自己的上下文结构, 比如<code>location</code>要在<code>server</code>或<code>location</code>里面, 在官方文档中, 如果<code>context</code>有逗号分隔, 即表示此配置可以写在多种上下文结构中. 如果某配置项直接下载文件的最外层, 那么称此配置项处于<code>main</code>上下文中.</p>
+<p>简单来说, 只要在从最外层到内层, 依次配置好<code>http</code>,<code>server</code>,<code>location</code>即可. 换句话说, 只要在http server中加上<code>dav_ext_lock_zone</code>, <code>dav_ext_lock</code>, <code>dav_access</code>, <code>dav_methods</code>, <code>dav_ext_methods</code>五项配置即可.</p>
+<ul>
+<li><code>dav_methods</code> 启用的webdav方法</li>
+<li><code>dav_ext_methods</code> 额外的不被原本webdav模块支持的方法</li>
+<li><code>dav_access</code> 新创建文件的访问权限</li>
+<li><code>dav_ext_lock_zone</code> 定义一个共享的锁空间</li>
+<li><code>dav_ext_lock</code> 启用锁, 并依赖于定义的锁空间</li>
+</ul>
+<pre><code>http {
+    include       mime.types;
+    default_type  application/octet-stream;
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/nginx">#nginx</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/kvm%E5%AE%89%E8%A3%85/">
-                    KVM安装
-                </a>
-            </h2>
-            <div><p>本篇总结自how-to-install-virtual-machine-manager-kvm-in-manjaro-and-arch-linux.</p></div>
-            <div class="post-footer">
-            <time>February 29, 2020</time>
+    gzip  on;
+    sendfile        on;
+    
+    dav_ext_lock_zone zone=webdav_lock_zone:4m;
+    server {
+        listen      80;
+        server_name localhost;
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/kvm">#KVM</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/%E6%A0%91%E8%8E%93%E6%B4%BEarch-base%E7%B3%BB%E7%BB%9F%E6%97%A0%E5%A4%B4%E9%85%8D%E7%BD%AEwifi%E8%BF%9E%E6%8E%A5/">
-                    树莓派Arch Base系统无头配置wifi
-                </a>
-            </h2>
-            <div><p>开门见山 本文讲解了基于ArchLinux的发行版在没有显示器/键盘/网线, 只有读卡器/一台电脑/WIFI的情况下配置无线连接的事.</p></div>
-            <div class="post-footer">
-            <time>February 6, 2020</time>
+        dav_access      user:rw group:r all:r;
+        dav_methods     PUT DELETE MKCOL COPY MOVE;
+        dav_ext_methods PROPFIND OPTIONS;
+        dav_ext_lock    zone=webdav_lock_zone;
 
-            
-            
-                
-                    <a class="tag" href="/tags/raspi">#raspi</a>
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/vsftp%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E8%B8%A9%E5%9D%91/">
-                    vsftp 配置,踩坑和一些理解
-                </a>
-            </h2>
-            <div><p>1. vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为三个方面</p></div>
-            <div class="post-footer">
-            <time>October 1, 2019</time>
+        location / {
+            root    /srv/webdav/;
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/vsftp">#vsftp</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/linux%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-crontab/">
-                    Linux计划任务 -- crontab
-                </a>
-            </h2>
-            <div><p>使用语法 crontab 的每行命令有5个日期时间部分，5个部分之间使用space或tab分隔，后面接着需要执行的命令</p></div>
-            <div class="post-footer">
-            <time>September 17, 2019</time>
+            create_full_put_path    on;
+            client_body_temp_path   /srv/webdav/temp_upload;
+        }
+    }
+}
+</code></pre><h2 id="认证权限">认证权限</h2>
+<p>身份认证基于nginx的官方模块<code>ngx_http_auth_basic_module</code>, 有<code>auth_basic</code>和<code>auth_basic_user_file</code>两个选项, 并且通用于<code>http</code>, <code>server</code>, <code>location</code>下.</p>
+<ul>
+<li><code>auth_basic</code> 是给客户端的请求认证的提示的字符串</li>
+<li><code>auth_basic_user_file</code> 则是指定依赖的认证文件</li>
+</ul>
+<p>认证文件可以由Apache httpd的<code>htpasswd</code>命令生成, 也可是以如下格式</p>
+<pre><code>user1:password1:comment1
+user2:password2:comment2
+</code></pre><h2 id="ssl加密">SSL加密</h2>
+<p>此功能依赖于官方<code>ngx_http_ssl_module</code>模块. 不求甚解可以直接把默认配置里面对https服务器的SSL部分拿过来, 同时确保<code>ssl_certificate</code>和<code>ssl_certificate_key</code>两个选项指向合法的对应文件即可. 此外要求监听端口附加<code>ssl</code>声明, 如<code>listen 443 ssl</code>, 此外同一个<code>server</code>可以同时监听SSL和无加密端口.</p>
+<p>证书和密钥可以自己生成一个不被其他人认可的, 也可以从域名服务商处或其他CA获取被认可的.</p>
+<h2 id="样例">样例</h2>
+<pre><code>http {
+    include       mime.types;
+    default_type  application/octet-stream;
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/crontab">#crontab</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/linux%E6%9C%8D%E5%8A%A1-systemd.unit/">
-                    Linux服务 -- systemd.unit
-                </a>
-            </h2>
-            <div><p>概括 通过systemctl命令可以对服务进行一些基本操作, 包括启动,停止,重启等, 而这条命令操作的服务的位置就在/etc/systemd/system目录下, 如果想要我们想要创建一个自己的服务用于开机自动运行, 只需要在这个目录下创建一个名为{your service name}.</p></div>
-            <div class="post-footer">
-            <time>September 14, 2019</time>
+    gzip  on;
+    sendfile        on;
+    
+    dav_ext_lock_zone zone=webdav_lock_zone:4m;
+    server {
+        listen      80;
+        listen      443 default_server ssl;
+        server_name localhost;
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/systemctl">#systemctl</a>
-                
-            
-            </div> 
-           
-        </article>
-        
+        access_log /var/log/nginx/webdav/access.log;
+
+        ssl_certificate      /etc/ssl/certs/certificate.pem;
+        ssl_certificate_key  /etc/ssl/private/certificate.key;
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+
+        dav_access      user:rw group:r all:r;
+        dav_methods     PUT DELETE MKCOL COPY MOVE;
+        dav_ext_methods PROPFIND OPTIONS;
+        dav_ext_lock    zone=webdav_lock_zone;
+
+        location / {
+            root    /srv/webdav/;
+
+            # enable creating directories without trailing slash
+            if (-d $request_filename) { rewrite ^(.*[^/])$ $1/ break; }
+            if ($request_method = MKCOL) { rewrite ^(.*[^/])$ $1/ break; }
+
+            auth_basic              &quot;Auth of webdav&quot;;
+            auth_basic_user_file    /srv/webdav/.htpasswd;
+
+            create_full_put_path    on;
+            client_body_temp_path   /srv/webdav/temp_upload;
+        }
+    }
+}
+</code></pre>
+        </p>
     </div>
+    
+
+    <div class="page-footer">
+        <hr class="footer-divider">
         
-        <div class="paginator">
         
+            <a class="tag" href="/tags/linux">#linux</a>
         
-        <p>Page 1 of 2</p>
-        <div class="paginator-group">
-            
-            
-                <a class="color-link older" href="/page/2/">
-                    Older
-                    <svg width="13px" height="9px" viewBox="0 0 13 9" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                            <g class="color-arrow" fill="#63BDA2" fill-rule="nonzero">
-                                <polygon points="7.6707477 1.37628835 8.3292523 0.623711653 12.7592994 4.50000282 8.32918951 8.37629079 7.67069049 7.62370921 11.2407006 4.49999718"></polygon>
-                                <polygon id="Path" points="0 5 0 4 12 4 12 5"></polygon>
-                            </g>
-                    </svg>
-                        
-                </a>
-            
-        </div>
+            <a class="tag" href="/tags/nginx">#nginx</a>
         
+      
     </div>
+
 
         
 

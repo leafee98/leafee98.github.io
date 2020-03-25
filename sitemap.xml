@@ -3,27 +3,37 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>/tags/linux/</loc>
+    <lastmod>2020-03-24T23:26:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/nginx/</loc>
+    <lastmod>2020-03-24T23:26:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/nginx%E9%85%8D%E7%BD%AEwebdav/</loc>
+    <lastmod>2020-03-24T23:26:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/</loc>
+    <lastmod>2020-03-24T23:26:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2020-03-24T23:26:53+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/tags/kvm/</loc>
     <lastmod>2020-02-29T15:12:41+08:00</lastmod>
   </url>
   
   <url>
     <loc>/posts/kvm%E5%AE%89%E8%A3%85/</loc>
-    <lastmod>2020-02-29T15:12:41+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/linux/</loc>
-    <lastmod>2020-02-29T15:12:41+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/posts/</loc>
-    <lastmod>2020-02-29T15:12:41+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/</loc>
     <lastmod>2020-02-29T15:12:41+08:00</lastmod>
   </url>
   

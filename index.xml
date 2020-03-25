@@ -12,6 +12,15 @@
     
     
     <item>
+      <title>Nginx配置webdav</title>
+      <link>/posts/nginx%E9%85%8D%E7%BD%AEwebdav/</link>
+      <pubDate>Tue, 24 Mar 2020 23:26:53 +0800</pubDate>
+      
+      <guid>/posts/nginx%E9%85%8D%E7%BD%AEwebdav/</guid>
+      <description>本质上, webdav就是从http拓展了几条指令, 从而可以用来管理文件系统或进行文件分享.</description>
+    </item>
+    
+    <item>
       <title>KVM安装</title>
       <link>/posts/kvm%E5%AE%89%E8%A3%85/</link>
       <pubDate>Sat, 29 Feb 2020 15:12:41 +0800</pubDate>
