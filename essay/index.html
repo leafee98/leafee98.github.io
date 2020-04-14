@@ -133,6 +133,7 @@
         <p>
         <p>用来随便记一些什么, 也可以认为是博文前的草稿, 不定时上传.</p>
 <hr>
+<h2 id="heading"></h2>
 <h2 id="snap-代理设置">snap 代理设置</h2>
 <p><code>set</code>命令用来设置变量值, <code>get</code>命令则可以获取变量值. 推测配置格式类似json.</p>
 <pre><code># 以下两句可以获取包&quot;system&quot;的配置选项和其下的&quot;proxy&quot;的配置选项
@@ -236,11 +237,16 @@ snap set system proxy.https=&quot;http://&lt;host&gt;:&lt;port&gt;&quot;
 <li>安装标准C++库, 依赖上一步的标准C库 (gcc内)</li>
 </ol>
 <hr>
+<h2 id="关于跨域请求">关于跨域请求</h2>
+<p>本质上, 跨域请求就是在一个域名的文档下, 使用JS等途径向另一个域名发起请求的行为.</p>
+<p>如果跨域请求被完全放开, 则恶意网站可以使用JS代码, 在用户访问自己的网页的时候运行JS代码, 向一些关键网站发出请求, 由于用户浏览器保存有用户上一次使用关键网站的cookie, 这些cookie也会被附加到JS代码发出的请求中, 从而被关键网站误认为是用户自身所为, 从而给恶意网站了可乘之机.</p>
+<p>跨域请求在前端代码中运行时, 如果只是简单请求, 则可以被正常使用; 如果是复杂请求, 则会在真正发送请求以前向跨域主机发送检查请求, 如果响应头没有相应的参数, 则后续完整的请求不会被发送, 同时向前端代码抛出无法定位的网络错误, 即复杂请求将会强制分为两次请求.</p>
+<hr>
 <h2 id="todo">todo</h2>
 <ul>
-<li><input checked="" disabled="" type="checkbox">CommonClipboard - use cookie to save server last connected.</li>
-<li><input disabled="" type="checkbox">OpenSSL generate certifiate</li>
-<li><input checked="" disabled="" type="checkbox">todo panel on KDE</li>
+<li><input checked="" disabled="" type="checkbox"> CommonClipboard - use cookie to save server last connected.</li>
+<li><input disabled="" type="checkbox"> OpenSSL generate certifiate</li>
+<li><input checked="" disabled="" type="checkbox"> todo panel on KDE</li>
 </ul>
 
         </p>
