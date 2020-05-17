@@ -153,7 +153,7 @@
 <p>然后去<a href="http://nginx.org/en/download.html">nginx官网</a>下载nginx的源码. 两个源码都放在一个比较方便操作的位置就好, 以下都假设放到了家目录下.</p>
 <h4 id="编译">编译</h4>
 <p>在编译之前, 首先需要了解nginx有一个参数是<code>-V</code>, 这个参数可以打印nginx的一些编译信息, 包括在configure步骤的参数, 如果已经现有一个可用的nginx, 只是希望替换原来的二进制程序, 保证编译后的程序和自身发行版的nginx行为尽可能相同, 则可以把此参数打印的configre参数全部复制一下.</p>
-<p>进入nginx源码目录, 运行目录下的<code>configure</code>, 附上刚刚拿到的参数, 最后再加上一个<code>--add-module</code>的参数, 指向&rsquo;arut/nginx-dav-ext-module'仓库的目录, 如下:</p>
+<p>进入nginx源码目录, 运行目录下的<code>configure</code>, 附上刚刚拿到的参数, 最后再加上一个<code>--add-module</code>的参数, 指向&rsquo;arut/nginx-dav-ext-module&rsquo;仓库的目录, 如下:</p>
 <pre><code>./configure &lt;parameters copied befored&gt; --add-module=../nginx-dav-ext-module/
 </code></pre><p>如果在配置过程中, 提示缺少某些依赖, 通过自己的包安装器安装即可, 也可以在参数中去掉产生错误的不必要的module.</p>
 <p>此时目录下应该出现<code>Makefile</code>文件, 这时使用<code>make</code>命令即可开始编译</p>
