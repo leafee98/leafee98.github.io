@@ -169,8 +169,20 @@ document.cookie = "test_cookie=; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
 ---
 
+## html的attribute和property
+
+`attribute`的值起源于`html`的书写, `property`是浏览器渲染成为DOM对象以后的属性, `property`会随DOM对象在浏览器中的交互而变化, 而`attribute`则是在html文档编写完毕以后便不再变化.
+
+需要注意几个特殊的属性: `id`和`type`等`property`的修改会反映到`attribute`中去, 但是诸如`value`等`property`的变化则不会反映到`attribute`. (特殊属性仅用来举例, 列举或不全面)
+
+在控制台中, 使用`object.property`访问的是对象的`property`, 需要访问对象的`attribute`则应当使用`object.getAttribute("nameOfAttribute")`.
+
+> 参考[What is the difference between properties and attributes in HTML?](https://stackoverflow.com/questions/6003819/what-is-the-difference-between-properties-and-attributes-in-html#answer-6004028)
+
+---
+
 ## todo
 
 - [x] CommonClipboard - use cookie to save server last connected.
-- [ ] OpenSSL generate certifiate
+- [x] OpenSSL generate certifiate
 - [x] todo panel on KDE
