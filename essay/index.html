@@ -242,10 +242,18 @@ snap set system proxy.https=&quot;http://&lt;host&gt;:&lt;port&gt;&quot;
 <p>如果跨域请求被完全放开, 则恶意网站可以使用JS代码, 在用户访问自己的网页的时候运行JS代码, 向一些关键网站发出请求, 由于用户浏览器保存有用户上一次使用关键网站的cookie, 这些cookie也会被附加到JS代码发出的请求中, 从而被关键网站误认为是用户自身所为, 从而给恶意网站了可乘之机.</p>
 <p>跨域请求在前端代码中运行时, 如果只是简单请求, 则可以被正常使用; 如果是复杂请求, 则会在真正发送请求以前向跨域主机发送检查请求, 如果响应头没有相应的参数, 则后续完整的请求不会被发送, 同时向前端代码抛出无法定位的网络错误, 即复杂请求将会强制分为两次请求.</p>
 <hr>
+<h2 id="html的attribute和property">html的attribute和property</h2>
+<p><code>attribute</code>的值起源于<code>html</code>的书写, <code>property</code>是浏览器渲染成为DOM对象以后的属性, <code>property</code>会随DOM对象在浏览器中的交互而变化, 而<code>attribute</code>则是在html文档编写完毕以后便不再变化.</p>
+<p>需要注意几个特殊的属性: <code>id</code>和<code>type</code>等<code>property</code>的修改会反映到<code>attribute</code>中去, 但是诸如<code>value</code>等<code>property</code>的变化则不会反映到<code>attribute</code>. (特殊属性仅用来举例, 列举或不全面)</p>
+<p>在控制台中, 使用<code>object.property</code>访问的是对象的<code>property</code>, 需要访问对象的<code>attribute</code>则应当使用<code>object.getAttribute(&quot;nameOfAttribute&quot;)</code>.</p>
+<blockquote>
+<p>参考<a href="https://stackoverflow.com/questions/6003819/what-is-the-difference-between-properties-and-attributes-in-html#answer-6004028">What is the difference between properties and attributes in HTML?</a></p>
+</blockquote>
+<hr>
 <h2 id="todo">todo</h2>
 <ul>
 <li><input checked="" disabled="" type="checkbox"> CommonClipboard - use cookie to save server last connected.</li>
-<li><input disabled="" type="checkbox"> OpenSSL generate certifiate</li>
+<li><input checked="" disabled="" type="checkbox"> OpenSSL generate certifiate</li>
 <li><input checked="" disabled="" type="checkbox"> todo panel on KDE</li>
 </ul>
 
