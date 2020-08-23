@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>nginx on Leafee&#39;s Blog</title>
+    <link>/tags/nginx/</link>
+    <description>Recent content in nginx on Leafee&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 24 Mar 2020 23:26:53 +0800</lastBuildDate>
+    
+	<atom:link href="/tags/nginx/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Nginx配置webdav</title>
+      <link>/posts/nginx%E9%85%8D%E7%BD%AEwebdav/</link>
+      <pubDate>Tue, 24 Mar 2020 23:26:53 +0800</pubDate>
+      
+      <guid>/posts/nginx%E9%85%8D%E7%BD%AEwebdav/</guid>
+      <description>本质上, webdav就是从http拓展了几条指令, 从而可以用来管理文件系统或进行文件分享.</description>
+    </item>
+    
+  </channel>
+</rss>
