@@ -10,6 +10,10 @@ git submodule update
 echo "#### deploy content to 'public/'"
 hugo
 
+if [ $? -ne 0 ] ; then
+    exit -1
+fi
+
 dest="hugo-build-$RANDOM"
 echo "#### INFO: temp directory of public is: $dest"
 
