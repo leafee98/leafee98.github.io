@@ -6,11 +6,7 @@
     <description>Recent content in KVM on Leafee&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 29 Feb 2020 15:12:41 +0800</lastBuildDate>
-    
-	<atom:link href="/tags/kvm/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Sat, 29 Feb 2020 15:12:41 +0800</lastBuildDate><atom:link href="/tags/kvm/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>KVM安装</title>
       <link>/posts/kvm%E5%AE%89%E8%A3%85/</link>

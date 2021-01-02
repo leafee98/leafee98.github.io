@@ -6,11 +6,7 @@
     <description>Recent content in systemctl on Leafee&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 14 Sep 2019 04:09:45 +0800</lastBuildDate>
-    
-	<atom:link href="/tags/systemctl/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Sat, 14 Sep 2019 04:09:45 +0800</lastBuildDate><atom:link href="/tags/systemctl/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux服务 -- systemd.unit</title>
       <link>/posts/linux%E6%9C%8D%E5%8A%A1-systemd.unit/</link>

@@ -2,7 +2,6 @@
 
 <html lang="en-us">
     <head>
-	<meta name="generator" content="Hugo 0.79.1" />
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,8 +28,6 @@
     
     
  
-    
-    <link rel="alternate" type="application/rss+xml" href="/index.xml" title="Leafee's Blog" />
     
     
 </head>
@@ -130,176 +127,147 @@
 </nav>
         <div id="content" class="content-container">
         
-<div class = "article-content">
-        
-        <div class="description">
-            <p>Blog of Leafee, or called note of Leafee better.</p>
-        </div>
-        
-        
-        
-        
-        <article>
-            <h2>
-                <a href="/posts/%E6%A0%91%E8%8E%93%E6%B4%BEarch-base%E7%B3%BB%E7%BB%9F%E6%97%A0%E5%A4%B4%E9%85%8D%E7%BD%AEwifi%E8%BF%9E%E6%8E%A5/">
-                    树莓派Arch Base系统无头配置wifi
-                </a>
-            </h2>
-            <div><p>开门见山 本文讲解了基于ArchLinux的发行版在没有显示器/键盘/网线, 只有读卡器/一台电脑/WIFI的情况下配置无线连接的事.</p></div>
-            <div class="post-footer">
-            <time>February 6, 2020</time>
+<h1 class="post-title">部署davical到apache2</h1>
+    <time>January 2, 2021</time>
+    <div>
+        <p>
+        <p>起源于 radicale 的 well-known 自动配置不能与 thunderbird 的 tbsync 插件和平地工作, 以及使用 python 实现的 radicale 在过去的半年中失去响应了 3 次, 所以决定找一个可能更稳定一些, 更加通用一些的支持 caldav 的服务程序, 最终选定了 davical .</p>
+<p>这里将在 debian 系统 apache2 上部署 davical , 同时会配置好 well-known 的重定向, 此外还会有一些实现方式的小推测.</p>
+<p>关于软件依赖等事项不再赘述, 这里只讨论使用 apache 部署 davical 站点的过程.</p>
+<h2 id="目录">目录</h2>
+<ul>
+<li><a href="#%E7%9B%AE%E5%BD%95">目录</a></li>
+<li><a href="#%E9%83%A8%E7%BD%B2-davical-%E7%AB%99%E7%82%B9">部署 davical 站点</a>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8-virtualhost-%E9%83%A8%E7%BD%B2-davical-%E4%B8%BA%E4%B8%80%E4%B8%AA%E6%96%B0%E7%9A%84%E7%AB%99%E7%82%B9">使用 VirtualHost 部署 davical 为一个新的站点</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E8%BD%AF%E9%93%BE%E6%8E%A5%E6%96%B9%E5%BC%8F%E9%83%A8%E7%BD%B2-davical-%E5%88%B0%E4%B8%80%E4%B8%AA-http-%E5%AD%90%E7%9B%AE%E5%BD%95">使用软链接方式部署 davical 到一个 http 子目录</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%88%AB%E5%90%8Dalias%E6%96%B9%E5%BC%8F%E9%83%A8%E7%BD%B2-davical-%E5%88%B0%E4%B8%80%E4%B8%AA-http-%E5%AD%90%E7%9B%AE%E5%BD%95">使用别名(Alias)方式部署 davical 到一个 http 子目录</a></li>
+</ul>
+</li>
+<li><a href="#well-known-%E7%9A%84%E9%85%8D%E7%BD%AE">well-known 的配置</a>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8-rewrite-%E9%83%A8%E7%BD%B2-well-known">使用 Rewrite 部署 well-known</a>
+<ul>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E8%AE%BF%E9%97%AE%E4%BD%93%E9%AA%8C">客户端的访问体验</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BD%BF%E7%94%A8-redirect-%E9%83%A8%E7%BD%B2-well-known">使用 Redirect 部署 well-known</a>
+<ul>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E8%AE%BF%E9%97%AE%E4%BD%93%E9%AA%8C-1">客户端的访问体验</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%85%B3%E4%BA%8E-rewrite-%E7%9A%84%E4%B8%80%E4%BA%9B%E8%A7%A3%E9%87%8A">关于 Rewrite 的一些解释</a></li>
+<li><a href="#%E5%85%B3%E4%BA%8E-redirect-%E6%97%B6%E6%9C%89%E6%97%A0%E5%90%8E%E7%BC%80%E6%96%9C%E6%9D%A0%E7%9A%84%E5%8C%BA%E5%88%AB">关于 Redirect 时有无后缀斜杠的区别</a>
+<ul>
+<li><a href="#%E4%B8%80%E4%B8%AA%E5%85%B3%E4%BA%8E-uri-%E5%90%8E%E7%BC%80%E6%96%9C%E6%9D%A0%E5%B9%B6%E5%9C%A8%E9%87%8D%E5%AE%9A%E5%90%91%E6%97%B6%E8%A2%AB%E6%9B%BF%E6%8D%A2%E7%9A%84%E4%BE%8B%E5%AD%90">一个关于 URI 后缀斜杠并在重定向时被替换的例子</a></li>
+<li><a href="#%E4%B8%80%E4%B8%AA%E9%87%8D%E5%AE%9A%E5%90%91%E4%B8%8E%E7%9B%B4%E6%8E%A5%E8%8E%B7%E5%8F%96%E7%BD%91%E9%A1%B5%E6%96%87%E6%A1%A3%E5%90%8C%E6%97%B6%E5%B7%A5%E4%BD%9C%E7%9A%84%E4%BE%8B%E5%AD%90">一个重定向与直接获取网页文档同时工作的例子</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="部署-davical-站点">部署 davical 站点</h2>
+<p>部署 davical 有两大类别, 分别是部署为一个新的站点和部署为一个网站的子目录.</p>
+<p>部署为新的站点比较方便, 而且不会对未来可能的新目录产生冲突, 但建议配合 DNS 来使用, 以免浪费一个 80 端口, 此外客户端的配置也十分简单.</p>
+<p>部署为一个 http 子目录兼容性则会更好一些, 适用于更多场景.</p>
+<h3 id="使用-virtualhost-部署-davical-为一个新的站点">使用 VirtualHost 部署 davical 为一个新的站点</h3>
+<p>部署为一个新的站点只需要创建一个新的 VirtualHost 条目, 并指定网页根目录 DocumentRoot 即可. 比如将新站点监听在本机所有 IP 的 81 端口, 只需要在 VirualHost 条目中通配指定所有 IP , 再指定端口 81 即可.</p>
+<p>需要注意的是那个比较容易被忽略的 <code>Listen 81</code> 的指令, 这个指令要求 apache2 在运行时监听 81 端口, 如果没有这条指令则会发现站点无法正常使用, 表现为无法建立连接, 在服务器主机上也会发现没有任何进程监听 81 端口.</p>
+<pre><code>Listen 81
+&lt;VirtualHost *:81&gt;
+    DocumentRoot /usr/share/davical/htdocs
+&lt;/VirtualHost&gt;
+</code></pre><p>使用这种方式配置以后, 在客户端的配置中需要指定 caldav/carddav 的目录为根目录或忽略不写路径即可.</p>
+<h3 id="使用软链接方式部署-davical-到一个-http-子目录">使用软链接方式部署 davical 到一个 http 子目录</h3>
+<p>这种配置方式不需要去为了建立站点或重定向来修改配置文件, 只需要在当前的站点的 DocumentRoot 的文件目录中建立一个指向 davical 的 <code>htdocs</code> 的目录的软链接即可.</p>
+<pre><code># ls -l
+total 2
+-rw-r--r-- 1 root root 10701 Dec 27 23:39 index.html
+lrwxrwxrwx 1 root root    26 Dec 28 02:25 davical-link -&gt; /usr/share/davical/htdocs/
+</code></pre><h3 id="使用别名alias方式部署-davical-到一个-http-子目录">使用别名(Alias)方式部署 davical 到一个 http 子目录</h3>
+<p>在需要部署的站点 (VirtualHost) 中添加 <code>Alias</code> 指令就可以实现和建立软链接相同的效果.</p>
+<p>需要注意是否在第一个参数 URI 中后缀一个斜杠, <code>Alias</code> 对于 URI 后缀斜杠的行为与 <code>Redirect</code> 类似, 具体在<a href="#%E5%85%B3%E4%BA%8E-redirect-%E6%97%B6%E6%9C%89%E6%97%A0%E5%90%8E%E7%BC%80%E6%96%9C%E6%9D%A0%E7%9A%84%E5%8C%BA%E5%88%AB">关于 Redirect 时有无后缀斜杠的区别</a>中描述.</p>
+<pre><code>Alias &quot;/davical&quot; &quot;/usr/share/davical/htdocs/&quot;
+</code></pre><h2 id="well-known-的配置">well-known 的配置</h2>
+<p>well-known 是一个将各种可能在网页文档某个路径的服务另外在路径 <code>/.well-known/</code> 下为指定名称的文档请求返回跳转响应的约定.</p>
+<blockquote>
+<p>比如 caldav 服务部署在 <code>/davical/caldav.php</code> 路径, 若配置好 well-known 则访问 <code>/.well-known/caldav</code> URI 时, 会在得到一个响应头, 其中 <code>location</code> 字段为 <code>/davical/caldav.php</code>, 状态码为任意一个跳转状态码 (如 301 或 302), 随后客户端会根据得到的 URI 去再一次请求服务.</p>
+</blockquote>
+<p>对于 davical 的 well-known 的配置可以参见其 <a href="https://wiki.davical.org/index.php/Well-known_URLs">wiki (Well-known URLs)</a> , 下面也会进行简短的复述.</p>
+<p>davical 的 well-known 工作机制要求 well-known 的访问被 <code>/davical-base/caldav.php/.well-known/caldav</code> 处理, 处理结果中, GET 请求会直接在此 URI 的网页文档下处理, <strong>而 caldav 中用到的 PROPFIND 等请求会返回一个重定向响应, 响应路径为 <code>/davical-base/caldav.php</code></strong> .</p>
+<p>在 apache 的配置当中, <strong>一切配置的目的都是将访问到 <code>/.well-known/caldav</code> 到请求重定向到 <code>/davical-base/caldav.php/.well-known/caldav</code></strong>, 实现这一目的的手段有对用户透明的 <code>Rewrite</code> 和用户可见的 <code>Redirect</code> 两种.</p>
+<h3 id="使用-rewrite-部署-well-known">使用 Rewrite 部署 well-known</h3>
+<p>假设 davical 被部署在 <code>/davical-base/</code> 下, 使用 <code>Rewrite</code> 需要先引入模块 <code>mod_rewrite</code>, 仅重写 caldav 服务的情况时, 配置如下.</p>
+<pre><code>RewriteEngine On
+RewriteRule ^/\.well-known/caldav$ /davical-base/caldav.php/.well-known/caldav [NC,L]
+</code></pre><h4 id="客户端的访问体验">客户端的访问体验</h4>
+<pre><code>Request: PROPFIND http://hostname/.well-known/caldav
+Response: 301 location=/davical-base/caldav.php
 
-            
-            
-                
-                    <a class="tag" href="/tags/raspi">#raspi</a>
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/vsftp%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E5%92%8C%E8%B8%A9%E5%9D%91/">
-                    vsftp 配置,踩坑和一些理解
-                </a>
-            </h2>
-            <div><p>1. vsftpd虚拟用户的配置 配置vsftpd的虚拟用户简单分为三个方面</p></div>
-            <div class="post-footer">
-            <time>October 1, 2019</time>
+Request: PROPFIND http://hostname/davical-base/caldav.php
+Response: ... ... ... ...
+</code></pre><h3 id="使用-redirect-部署-well-known">使用 Redirect 部署 well-known</h3>
+<p>假设 davical 被部署在同一位置, 仅重写 caldav 服务时, 配置如下.</p>
+<pre><code>Redirect /.well-known/caldav /davical-base/caldav.php/.well-known/caldav
+</code></pre><h4 id="客户端的访问体验-1">客户端的访问体验</h4>
+<pre><code>Request: PROPFIND http://hostname/.well-known/caldav
+Response: 302 location=/davical-base/caldav.php/.well-known/caldav
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/vsftp">#vsftp</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/linux%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-crontab/">
-                    Linux计划任务 -- crontab
-                </a>
-            </h2>
-            <div><p>使用语法 crontab 的每行命令有5个日期时间部分，5个部分之间使用space或tab分隔，后面接着需要执行的命令</p></div>
-            <div class="post-footer">
-            <time>September 17, 2019</time>
+Request: PROPFIND http://hostname/davical-base/caldav.php/.well-known/caldav
+Response: 301 location=/davical-base/caldav.php
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/crontab">#crontab</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/linux%E6%9C%8D%E5%8A%A1-systemd.unit/">
-                    Linux服务 -- systemd.unit
-                </a>
-            </h2>
-            <div><p>概括 通过systemctl命令可以对服务进行一些基本操作, 包括启动,停止,重启等, 而这条命令操作的服务的位置就在/etc/systemd/system目录下, 如果想要我们想要创建一个自己的服务用于开机自动运行, 只需要在这个目录下创建一个名为{your service name}.</p></div>
-            <div class="post-footer">
-            <time>September 14, 2019</time>
+Request: PROPFIND http://hostname/davical-base/caldav.php
+Response: ... ... ... ...
+</code></pre><h2 id="关于-rewrite-的一些解释">关于 Rewrite 的一些解释</h2>
+<p><code>Rewrite</code> 是简单的修改 URI , 然后将修改后的 URI 中的资源作为响应返回给请求, <strong>这一过程对于客户端是透明的</strong>.</p>
+<h2 id="关于-redirect-时有无后缀斜杠的区别">关于 Redirect 时有无后缀斜杠的区别</h2>
+<p>Redirect 只是一个普通的查找替换, 相当于将 URI 中特定前缀替换为第二个参数表述的字符串以后, 将修改之后的 URI 作为响应头中的 location 字段值并以 301 作为状态码返回给浏览器.</p>
+<p>此外, 对于目录文件, 如果 URI 的目标刚好是一个目录文件, 在匹配唯一的情况下, 是否后缀斜杠以及后缀多少个斜杠对于目录项来说没有区别, 即 <code>/dir</code> 与 <code>/dir/</code> <code>/dir//</code> 没有区别. 而对于普通文档, 则后缀一个额外的斜杠以后会无法访问该文档.</p>
+<h3 id="一个关于-uri-后缀斜杠并在重定向时被替换的例子">一个关于 URI 后缀斜杠并在重定向时被替换的例子</h3>
+<p>所以对于是否加上斜杠, 应考虑是否需要要以斜杠的方式访问. 如网页根目录内容以及目标为 <code>tmp-file</code> 的重定向如下.</p>
+<pre><code># content of the DocumentRoot
+-rw-r--r-- 1 root root   9 Jan  2 00:09 tmp-file
 
-            
-            
-                
-                    <a class="tag" href="/tags/linux">#linux</a>
-                
-                    <a class="tag" href="/tags/systemctl">#systemctl</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E9%9A%8F%E7%AC%94/">
-                    正则表达式随笔
-                </a>
-            </h2>
-            <div><p>POSIX基础正则表达式 纯文本 以文本形式直接写出需要匹配的内容</p></div>
-            <div class="post-footer">
-            <time>August 3, 2019</time>
+# directive in VirtualHost
+Redirect /redirect-file/ /tmp-file
+</code></pre><p>浏览器访问 URI 为 <code>http://hostname/redirect-file/</code> 的网页时, 得到的响应头如下.</p>
+<pre><code>HTTP/1.1 302 Found
+Date: Sat, 02 Jan 2021 06:43:49 GMT
+Server: Apache/2.4.38 (Debian)
+Location: http://hostname/tmp-file
+Content-Length: 296
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=iso-8859-1
+</code></pre><p>随后浏览器跳转到 <code>http://hostname/tmp-file</code> 最终获取到真正的网页.</p>
+<p>请留意 302 跳转时浏览器访问时提供的 URI 中后缀的斜杠, 以及重定向指令中的源 URI 中的斜杠.</p>
+<p>当访问的 URI 中没有后缀斜杠时, 即访问时提供的 URI 为 <code>http://hostname/redirect-file</code> 时, 此重定向指令将不会生效, 最终浏览器得到一个 404 的响应.</p>
+<h3 id="一个重定向与直接获取网页文档同时工作的例子">一个重定向与直接获取网页文档同时工作的例子</h3>
+<pre><code># content of the DocumentRoot
+-rw-r--r-- 1 root root   9 Jan  2 00:09 redirect-dir
+drw-r--r-- 1 root root   9 Jan  2 00:09 tmp-dir
 
-            
-            
-                
-                    <a class="tag" href="/tags/regular-expression">#regular-expression</a>
-                
-            
-            </div> 
-           
-        </article>
-        
-        <article>
-            <h2>
-                <a href="/posts/%E7%A7%91%E4%B8%80%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/">
-                    科一知识点总结
-                </a>
-            </h2>
-            <div><p>总结截止于2019年8月2日，之后的知识点或可能不再进行更新。</p></div>
-            <div class="post-footer">
-            <time>August 2, 2019</time>
+# directive in VirtualHost
+Redirect /redirect-dir/ /tmp-dir
+</code></pre><p>当如上配置时, URI 为 <code>http://hostname/redirect-dir</code> 时, 会直接获取到文件 <code>redirect-dir</code> 的内容, 当 URI 为 <code>http://hostname/redirect-dir/</code> 时, 会访问到<strong>目录</strong> <code>tmp-dir</code> 的内容.</p>
 
-            
-            
-                
-                    <a class="tag" href="/tags/drive">#drive</a>
-                
-            
-            </div> 
-           
-        </article>
-        
+        </p>
     </div>
+    
+
+    <div class="page-footer">
+        <hr class="footer-divider">
         
-        <div class="paginator">
         
+            <a class="tag" href="/tags/linux">#linux</a>
         
-        <p>Page 2 of 3</p>
-        <div class="paginator-group">
-            
-            <a class="color-link" href="/">
-                    <svg width="13px" height="9px" viewBox="0 0 13 9" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                        <g class="color-arrow" fill="#63BDA2" fill-rule="nonzero">
-                            <polygon id="Path" points="1.75929935 4.50000282 5.3292523 7.62371165 4.6707477 8.37628835 0.240700645 4.49999718 4.67081049 0.623709205 5.32930951 1.37629079"></polygon>
-                            <polygon id="Path" points="13 4 13 5 1 5 1 4"></polygon>
-                        </g>
-                </svg>  
-                Newer          
-            </a>
-            
-            
-                <a class="color-link older" href="/page/3/">
-                    Older
-                    <svg width="13px" height="9px" viewBox="0 0 13 9" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                            <g class="color-arrow" fill="#63BDA2" fill-rule="nonzero">
-                                <polygon points="7.6707477 1.37628835 8.3292523 0.623711653 12.7592994 4.50000282 8.32918951 8.37629079 7.67069049 7.62370921 11.2407006 4.49999718"></polygon>
-                                <polygon id="Path" points="0 5 0 4 12 4 12 5"></polygon>
-                            </g>
-                    </svg>
-                        
-                </a>
-            
-        </div>
+            <a class="tag" href="/tags/apache">#apache</a>
         
+            <a class="tag" href="/tags/caldav">#caldav</a>
+        
+      
     </div>
+
 
         
 
